@@ -1,0 +1,19 @@
+{
+    "File": {
+        "autoSaveVersion": 1
+    },
+    "Settings": {
+        "guildType": "GuildTypeSocial",
+        "locale": "pl",
+        "channelParam": "「💻」",
+        "categoryParam": "{name} {emoji} {emoji}",
+        "channelfont": "ScriptBold",
+        "categoryfont": "ScriptBold",
+        "Channel": {
+            "array": "cmdChannel, bookChannel",
+            "all": true,
+            "force": "test"
+        }
+    },
+    "PoweredBy": "hiayaf services"
+}
