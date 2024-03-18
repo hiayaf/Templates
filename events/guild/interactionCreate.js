@@ -4,7 +4,65 @@ const fs = require('fs');
 const path = require('path');
 const util = require('util');
 module.exports = async (client, interaction) => {
-    const database = require('../../index').database;
+    const mysql = require('mysql');
+    var database = mysql.createConnection('mysql://user:pass@host/db?debug=true');
+
+    // Obsługa błędów bazy danych
+    function handleDatabaseError(err) {
+        const now = new Date();
+        const timestamp = now.toLocaleString();
+        const data = `${timestamp} Wystąpił nieoczekiwany błąd bazy danych:\n${err}\n`;
+        fs.access('logs.txt', (accessErr) => {
+            if (accessErr) {
+                fs.writeFile('logs.txt', '', (writeErr) => {
+                    if (writeErr) {
+                        console.error(writeErr);
+                        return;
+                    }
+                    fs.appendFile('logs.txt', data, (appendErr) => {
+                        if (appendErr) {
+                            console.error(appendErr);
+                            return;
+                        }
+                    });
+                });
+            } else {
+                fs.appendFile('logs.txt', data, (appendErr) => {
+                    if (appendErr) {
+                        console.error(appendErr);
+                        return;
+                    }
+                });
+            }
+        });
+    }
+
+    function initializeDatabaseConnection() {
+        database = mysql.createConnection(dbconfig);
+        database.connect((err) => {
+            if (err) {
+                console.error('Błąd połączenia z bazą danych:', err.stack);
+                return;
+            }
+        });
+        setTimeout(() => {
+            database.end(function (err) {
+                if (err) {
+                    console.error('Błąd zamknięcia połączenia:', err.stack);
+                    return;
+                }
+            });
+        }, 2500)
+        // Obsługa błędów połączenia z bazą danych
+        database.on('error', function (err) {
+            console.error('Błąd połączenia z bazą danych:', err);
+            handleDatabaseError(err);
+        });
+    }
+
+    initializeDatabaseConnection();
+
+    // Wczytywanie danych
     const fonts = require('../../fonts.json');
     const fontedText = require('../../index').fontedText;
     const langCode = interaction.locale.slice(0, 2);
@@ -13,7 +71,6 @@ module.exports = async (client, interaction) => {
 
     let lang;
     const queryPromise = util.promisify(database.query).bind(database);
-
     try {
         const rows = await queryPromise(`SELECT * FROM lang WHERE user = '${interaction.user.id}'`);
         if (rows.length) {
@@ -273,7 +330,7 @@ module.exports = async (client, interaction) => {
                     const embed = new EmbedBuilder()
                         .setTitle(`${lang.sessionInfo.sessionDeleteSuccess}`)
                         .setFooter({ text: `${saveRows[0].uuid}` })
-                        .setDescription(`**${lang.sessionInfo.createNewUsing} </create_discord_template:1105807884312383558>**`)
+                        .setDescription(`**${lang.sessionInfo.createNewUsing} </create_template:1108528052281028688>**`)
                         .setColor('#e62929');
                     interaction.update({ components: [], embeds: [embed], ephemeral: true });
                 };
@@ -464,7 +521,7 @@ module.exports = async (client, interaction) => {
                     const embed = new EmbedBuilder()
                         .setColor('DarkOrange')
                         .setTitle(`${lang.sessionInfo.sessionDeleteInfoTitle}`)
-                        .setDescription(`**${lang.sessionInfo.createSessionsUsing.replace("%cmd", "</create_discord_template:1055609024420270202>**")}`)
+                        .setDescription(`**${lang.sessionInfo.createSessionsUsing.replace("%cmd", "</create_template:1108528052281028688>**")}`)
                         .setTimestamp()
                         .setFooter({ text: 'Kod błędu: 4054c' });
                     interaction.editReply({ embeds: [embed], ephemeral: true });
@@ -552,7 +609,7 @@ module.exports = async (client, interaction) => {
                         const embed = new EmbedBuilder()
                             .setColor('DarkOrange')
                             .setTitle(`${lang.sessionInfo.noSavedSessions}`)
-                            .setDescription(`**${lang.sessionInfo.createSessionsUsing.replace("%cmd", "</create_discord_template:1055609024420270202>**")}`)
+                            .setDescription(`**${lang.sessionInfo.createSessionsUsing.replace("%cmd", "</create_template:1108528052281028688>**")}`)
                             .setTimestamp()
                             .setFooter({ text: 'Kod błędu: 4052c' });
                         interaction.reply({ embeds: [embed], ephemeral: true });
@@ -635,7 +692,7 @@ module.exports = async (client, interaction) => {
                         const embed = new EmbedBuilder()
                             .setColor('DarkOrange')
                             .setTitle(`${lang.sessionInfo.noSavedSessions}`)
-                            .setDescription(`**${lang.sessionInfo.createSessionUsing} </create_discord_template:1055609024420270202>**`)
+                            .setDescription(`**${lang.sessionInfo.createSessionUsing} </create_template:1108528052281028688>**`)
                             .setTimestamp()
                             .setFooter({ text: 'Kod błędu: 4052c' })
                         interaction.reply({ embeds: [embed], ephemeral: true });
@@ -718,7 +775,7 @@ module.exports = async (client, interaction) => {
                         if (!rows.length) {
                             if (session != '') {
                                 const embed = new EmbedBuilder()
-                                    .setColor('DarkOrange').setTitle(`${lang.sessionInfo.sessionWithIdDelete.replace("%session", `${session}`)}`).setDescription(`**${lang.sessionInfo.createSessionsUsing.replace("%cmd", "</create_discord_template:1082756745476190321>**")}`).setTimestamp().setFooter({ text: 'Kod błędu: 4013x' })
+                                    .setColor('DarkOrange').setTitle(`${lang.sessionInfo.sessionWithIdDelete.replace("%session", `${session}`)}`).setDescription(`**${lang.sessionInfo.createSessionsUsing.replace("%cmd", "</create_template:1108528052281028688>**")}`).setTimestamp().setFooter({ text: 'Kod błędu: 4013x' })
                                 interaction.editReply({ embeds: [embed], ephemeral: true });
                             } else {
                                 interaction.message.delete();
@@ -1293,9 +1350,9 @@ module.exports = async (client, interaction) => {
                 database.query(`SELECT template FROM created`, (err, rows) => {
                     if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true });
                     if (rows.length) {
-                        database.query(`UPDATE created SET template=${rows[0].template + 1}`)
+                        database.query(`INSERT INTO created (template) VALUES ('1')`)
                     }
-                })
+                });
                 interaction.message.edit({ components: [buttons] })
                 await interaction.editReply({ embeds: [embed, statEmbed], content: `${lang.taskTimeInfo} ${formatTime(elapsedTime)}` })
             }
@@ -1306,7 +1363,7 @@ module.exports = async (client, interaction) => {
                 } else {
                     interaction.editReply({ content: `${lang.sessionInfo.notExist}`, ephemeral: true })
                 }
-            })
+            });
         } else if (interaction.customId == "editBackupSession") {
             validate(interaction.message.embeds[0], interaction);
             database.query(`SELECT * FROM guild_template WHERE user = '${interaction.user.id}'`, (err, rows) => {
