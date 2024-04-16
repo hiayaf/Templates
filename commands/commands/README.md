@@ -37,7 +37,32 @@
 ### "Channel":
 #### array: 
   - tablica listy kanałów możliwych do stworzenia:
-   - autoRolesChannel, filmChannel, verifyChannel, gamesChannel, ticketChannel, boostChannel, technoChannel, faqChannel, memesChannel, cmdChannel, logsChannel, adminChannel, suggestionChannel, graphicChannel, changelogChannel, giveawayChannel, pollChannel, eventChannel, infoChannel, codeChannel, offtopChannel, socialChannel, helpChannel, gamersChannel, bookChannel, sportChannel
-####"all":
+   - autoRolesChannel
+   - filmChannel
+   - verifyChannel
+   - gamesChannel
+   - ticketChannel
+   - boostChannel
+   - technoChannel
+   - faqChannel
+   - memesChannel
+   - cmdChannel
+   - logsChannel
+   - adminChannel
+   - suggestionChannel
+   - graphicChannel
+   - changelogChannel
+   - giveawayChannel
+   - pollChannel
+   - eventChannel
+   - infoChannel
+   - codeChannel
+   - offtopChannel
+   - socialChannel
+   - helpChannel
+   - gamersChannel
+   - bookChannel
+   - sportChannel
+#### "all":
  - ustawienie odpowiadające za utworzenie wszystkich kanałów
-"force": wsm nie pamiętam za co to odpowiada
+#### "force": wsm nie pamiętam za co to odpowiada
