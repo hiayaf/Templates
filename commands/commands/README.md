@@ -17,7 +17,6 @@
     }
 }
 ```
-Opcje do wpisania w określone ustawienia
 "guildType":
  - "guildTypeSocial"
  - "guildTypeFriends"
