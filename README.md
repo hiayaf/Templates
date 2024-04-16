@@ -3,6 +3,7 @@ is a Discord bot designed to streamline server management through customizable t
 
 <img 
 src="https://lj-company.pl/assets/en.png" width="512px">
+
 Bot Templates revolutionizes Discord communities, streamlining server creation and customization while effortlessly transferring settings between servers.
 Commands:
  - /create_template
@@ -11,3 +12,6 @@ Commands:
  - /updates_channel
  - /change_language
  - /fonts
+
+
+Version: 1.2.0
