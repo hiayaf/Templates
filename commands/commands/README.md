@@ -1,4 +1,4 @@
-<code>
+```json
 {
     "Settings": {
         "guildType": "GuildTypeSocial",
@@ -14,4 +14,4 @@
         }
     }
 }
-</code>
+```
