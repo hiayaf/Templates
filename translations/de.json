@@ -154,7 +154,7 @@
         "faqChannel": "Häufig gestellte Fragen (FAQ)",
         "memesChannel": "Memes",
         "cmdChannel": "Befehlskanal",
-        "logsChannel": "Protokoll (Logs)",
+        "logsChannel": "Logs",
         "adminChannel": "Administration",
         "suggestionChannel": "Vorschläge",
         "graphicChannel": "Grafik",
@@ -185,7 +185,7 @@
             "title": "Kanalparameter",
             "channelStyleInput": "Parameter für den Textkanalstil",
             "categoryStyleInput": "Parameter für den Kategoriestil",
-            "placeholderCategory": "{name} und {emoji} sind Platzhalter, die den Namen und das Emoji zum Kategorienamen hinzufügen",
+            "placeholderCategory": "{name} und {emoji} sind Platzhalter",
             "descInputValue": "Willkommen auf dem Server",
             "serverDesc": "Serverbeschreibung"
         },

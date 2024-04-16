@@ -1,3 +1,3 @@
 # Templates
-Templates Beta 1.0
+Templates Beta 1.1
 Author: hiayaf

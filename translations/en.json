@@ -1,13 +1,16 @@
 {
     "translateInfo": {
         "translator": "hiayaf",
-        "Language": "en"
+        "Language": "en",
+        "version": "1.0",
+        "createdInUnixTimestamp": "1704067201000",
+        "editedInUnixTimestamp": "0"
     },
     "loadTemplate": "Load Template",
     "loadTemplateBlocked": "Load Template (Template has been created)",
     "saveTemplate": "Save Template",
     "channelParameter": "Parameter for text channels:",
-    "successfullyCreatedTemplate_template": "Load Template",
+    "successfullyCreatedTemplate_template": "Vorlage erfolgreich erstellt",
     "success": "Success",
     "continue": "Continue",
     "load": "Load",
@@ -154,7 +157,7 @@
         "faqChannel": "Frequently asked questions (FAQ)",
         "memesChannel": "Memes",
         "cmdChannel": "Command Channel",
-        "logsChannel": "Event Logs",
+        "logsChannel": "Logs",
         "adminChannel": "Administration",
         "suggestionChannel": "Suggestions",
         "graphicChannel": "Graphics",
@@ -185,7 +188,7 @@
             "title": "Parameters for creating channels",
             "channelStyleInput": "Text channel style parameter",
             "categoryStyleInput": "Category style parameter",
-            "placeholderCategory": "{name} and {emoji} are placeholders that add the name and emoji to the category name",
+            "placeholderCategory": "{name} and {emoji} are placeholders",
             "descInputValue": "Welcome to the server",
             "serverDesc": "Server description"
         },

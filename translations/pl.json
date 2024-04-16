@@ -7,7 +7,7 @@
     "loadTemplateBlocked": "Wczytaj szablon (Szablon został stworzony)",
     "saveTemplate": "Zapisz szablon",
     "channelParameter": "Parametr dla kanałów tekstowych:",
-    "successfullyCreatedTemplate_template": "Wczytaj szablon",
+    "successfullyCreatedTemplate_template": "Pomyslnie utworzono szablon",
     "success": "Sukces",
     "continue": "Kontynuuj",
     "load": "Załaduj",
@@ -185,7 +185,7 @@
             "title": "Parametry według których mam tworzyć kanały",
             "channelStyleInput": "Parametr stylistyki kanału tekstowego",
             "categoryStyleInput": "Parametr stylistyki kategorii",
-            "placeholderCategory": "{name} oraz {emoji} to placeholdery które dodają nazwe i emoji do nazwy kategorii",
+            "placeholderCategory": "{name} oraz {emoji} to placeholdery nazw i emotek",
             "descInputValue": "Witaj na serwerze",
             "serverDesc": "Opis serwera"
         },
