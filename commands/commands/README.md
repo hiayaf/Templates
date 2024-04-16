@@ -36,8 +36,8 @@
  - dokładnie takie same działania jak "channelfont"
 ```txt
 "Channel":
-"array": 
-  - tablica listy kanałów możliwych do stworzenia:
+  "array": 
+   - tablica listy kanałów możliwych do stworzenia:
    - autoRolesChannel
    - filmChannel
    - verifyChannel
