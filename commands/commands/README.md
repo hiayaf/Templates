@@ -34,7 +34,8 @@
  - tutaj należy wpisać dowolny font z listy komendy /czcionki, który nam się podoba
 ### "categoryfont":
  - dokładnie takie same działania jak "channelfont"
-```json "Channel":
+```txt
+"Channel":
 "array": 
   - tablica listy kanałów możliwych do stworzenia:
    - autoRolesChannel
@@ -65,4 +66,6 @@
    - sportChannel
 "all":
  - ustawienie odpowiadające za utworzenie wszystkich kanałów
-"force": wsm nie pamiętam za co to odpowiada```
+"force": wsm nie pamiętam za co to odpowiada
+
+```
