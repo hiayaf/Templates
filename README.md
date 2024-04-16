@@ -15,4 +15,6 @@ Commands:
 
 
 Version: 1.2.0
-<a href="https://discord.gg/r9uTMfVJE8">Wsparcie
+<a href="https://discord.gg/r9uTMfVJE8">
+
+Wsparcie
