@@ -17,4 +17,4 @@ Commands:
 Version: 1.2.0
 
 
-<a href="https://discord.gg/r9uTMfVJE8">Wsparcie</a> <a href="https://discord.gg/djs"><img src="https://img.shields.io/discord/1109479816555675750?color=5865F2&logo=discord&logoColor=white" alt="Templates Support" /></a>
+<a href="https://discord.gg/r9uTMfVJE8"><img src="https://img.shields.io/discord/1109479816555675750?color=5865F2&logo=discord&logoColor=white" alt="Templates Support" /></a>
