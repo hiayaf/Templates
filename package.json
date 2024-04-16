@@ -94,7 +94,7 @@
     "tunnel-agent": "^0.6.0",
     "tweetnacl": "^0.14.5",
     "underscore": "^1.13.6",
-    "undici": "^5.27.2",
+    "undici": "^5.28.4",
     "undici-types": "^5.26.5",
     "uri-js": "^4.4.1",
     "util": "^0.12.5",
