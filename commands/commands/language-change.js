@@ -49,10 +49,12 @@ module.exports = {
         } else {
             const mysql = require('mysql');
             const dbconfig = {
-                host: 'serwer2396112.home.pl',
-                user: '37533466_templates',
-                password: '22WtY5t2bvrkNS2',
+                host: 'localhost',
+                user: 'root',
+                password: '',
                 database: '37533466_templates',
+                charset: 'utf8mb4',
+                collation: 'utf8mb4_unicode_ci'
             };
             let database;
 
