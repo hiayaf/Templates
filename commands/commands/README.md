@@ -35,7 +35,7 @@
 ### "categoryfont":
  - dokładnie takie same działania jak "channelfont"
 ```json "Channel":
-### "array": 
+"array": 
   - tablica listy kanałów możliwych do stworzenia:
    - autoRolesChannel
    - filmChannel
