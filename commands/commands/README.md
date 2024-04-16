@@ -1,3 +1,5 @@
+## Plik przykładowego szablonu do zaimportowania
+
 ```json
 {
     "Settings": {
