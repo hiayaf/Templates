@@ -1,41 +1,22 @@
-const { EmbedBuilder } = require('@discordjs/builders');
 const config = require('../../config.json');
 const clientConfig = require('../../package.json');
-const { Collection, ActivityType, REST, Routes, WebhookClient, MessageEmbed } = require('discord.js');
+const { ActivityType, WebhookClient, EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 const PastebinAPI = require('pastebin-js');
 
-const commands = [];
-const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js'));
 const pastebin = new PastebinAPI({
     'api_dev_key': config.pastebin.key,
     'api_user_name': config.pastebin.username,
     'api_user_password': config.pastebin.password
 });
 module.exports = async (client) => {
-    const database = require('../../index').database;
     const api = new Map();
-    client.commands = new Collection();
+    ["slash-cmd"].forEach(handler => {
+        require(`../../handlers/${handler}`)(client);
+    });
 
-    for (const file of commandFiles) {
-        const command = require(`../../commands/${file}`);
-        commands.push(command.data.toJSON());
-        client.commands.set(command.data.name, command);
-        console.log(`[Komendy] Pomyślnie wyczytano folder ${file}`);
-    }
 
-    const clientId = client.user.id;
-    const rest = new REST({ version: '10' }).setToken(config.token);
-
-    try {
-        console.log(`Started refreshing ${commands.length} application (/) commands.`);
-        const data = await rest.put(Routes.applicationCommands(clientId), { body: commands });
-        console.log(`Successfully reloaded ${data.length} application (/) commands.`);
-    } catch (error) {
-        console.error(error);
-    };
-
-    client.user.setActivity('/help', { type: ActivityType.Playing });
+    client.user.setActivity('/create_template', { type: ActivityType.Playing });
     console.log('Pomyślnie uruchomiono klienta');
     console.log(`Zalogowano jako ${client.user.tag}`);
 
@@ -54,13 +35,35 @@ module.exports = async (client) => {
         .setTimestamp()
         .setColor(0x00FFFF);
 
-    // webhookClient.send({
-    //   avatarURL: client.user.avatarURL({ size: 1024 }),
-    //   username: 'Templates',
-    //   embeds: [embed]
-    // });
+    webhookClient.send({
+        avatarURL: client.user.avatarURL({ size: 1024 }),
+        embeds: [embed]
+    });
+
+
+    const now = new Date();
+    const timestamp = now.toLocaleString();
+    const data = `${timestamp} Pomyślnie uruchomiono klienta ${client.user.tag}\n`;
+
+    fs.access('logs.txt', (err) => {
+        if (err) {
+            fs.writeFile('logs.txt', '', (err) => {
+                if (err) {
+                    return console.error(err);
+                }
+            });
+        }
+        fs.appendFile('logs.txt', data, (err) => {
+            if (err) {
+                return console.error(err);
+
+            };
+        });
+    });
 
     const interval = 3 * 60 * 1000;
+
+    let previousApiStatus = null;
 
     async function checkPastebin() {
         try {
@@ -70,7 +73,6 @@ module.exports = async (client) => {
 
             let logData;
             let apiStatus;
-
             if (data === 'true') {
                 apiStatus = true;
                 logData = `${timestamp} Moduł serwisowy został aktywowany.\n`;
@@ -95,69 +97,27 @@ module.exports = async (client) => {
                 });
             });
 
-            api.set('api', apiStatus);
+            if (previousApiStatus !== apiStatus) {
+                const embedModule = new EmbedBuilder()
+                    .setTitle(apiStatus ? 'Moduł serwisowy został załączony' : 'Moduł serwisowy został wyłączony')
+                    .addFields(
+                        { name: 'Status:', value: apiStatus ? 'Włączony' : 'Wyłączony' }
+                    )
+                    .setTimestamp()
+                    .setColor(0xf6ff00);
+                webhookClient.send({
+                    avatarURL: client.user.avatarURL({ size: 1024 }),
+                    embeds: [embedModule]
+                });
+            }
+            previousApiStatus = apiStatus;
+
         } catch (err) {
             console.log(err);
         }
     }
-
-    const now = new Date();
-    const timestamp = now.toLocaleString();
-    const data = `${timestamp} Pomyślnie uruchomiono klienta ${client.user.tag}\n`;
-
-    fs.access('logs.txt', (err) => {
-        if (err) {
-            fs.writeFile('logs.txt', '', (err) => {
-                if (err) {
-                    return console.error(err);
-                }
-            });
-        }
-        fs.appendFile('logs.txt', data, (err) => {
-            if (err) {
-                return console.error(err);
-
-            };
-        });
-    });
-
     checkPastebin();
-
-    const intervalId = setInterval(checkPastebin, interval);
-
+    setInterval(checkPastebin, interval);
     module.exports.api = api;
 
-    const channelId = '1119748175452983316';
-
-    function getTemplateCount() {
-        return new Promise((resolve, reject) => {
-            database.query('SELECT template FROM created', (err, rows) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(rows[0].template);
-                };
-            });
-        });
-    };
-
-    // const count = await getTemplateCount();
-
-    // setInterval(() => {
-    //     client.channels.fetch(channelId)
-    //         .then((channel) => {
-    //             channel.setName(`Stworzone szablony: ${count}`);
-    //         })
-    //         .catch((error) => {
-    //             console.error('Wystąpił błąd:', error);
-    //         });
-    // }, 30 * 60 * 1000);
-
-    // client.channels.fetch(channelId)
-    //     .then((channel) => {
-    //         channel.setName(`Stworzone szablony: ${count}`);
-    //     })
-    //     .catch((error) => {
-    //         console.error('Wystąpił błąd:', error);
-    //     });
 };

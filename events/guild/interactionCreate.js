@@ -1,13 +1,20 @@
 const config = require('../../config.json');
-const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonStyle, ButtonBuilder, TextInputBuilder, ModalBuilder, TextInputStyle, ChannelType, PermissionsBitField } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonStyle, ButtonBuilder, TextInputBuilder, ModalBuilder, TextInputStyle, ChannelType, PermissionsBitField, WebhookClient } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const util = require('util');
 module.exports = async (client, interaction) => {
     const mysql = require('mysql');
-    var database = mysql.createConnection('mysql://user:pass@host/db?debug=true');
+    const dbconfig = {
+        host: 'localhost',
+        user: 'root',
+        password: '',
+        database: '37533466_templates',
+        charset: 'utf8mb4',
+        collation: 'utf8mb4_unicode_ci'
+    };
+    let database;
 
-    // Obsługa błędów bazy danych
     function handleDatabaseError(err) {
         const now = new Date();
         const timestamp = now.toLocaleString();
@@ -45,15 +52,6 @@ module.exports = async (client, interaction) => {
                 return;
             }
         });
-        setTimeout(() => {
-            database.end(function (err) {
-                if (err) {
-                    console.error('Błąd zamknięcia połączenia:', err.stack);
-                    return;
-                }
-            });
-        }, 2500)
-        // Obsługa błędów połączenia z bazą danych
         database.on('error', function (err) {
             console.error('Błąd połączenia z bazą danych:', err);
             handleDatabaseError(err);
@@ -61,13 +59,23 @@ module.exports = async (client, interaction) => {
     }
 
     initializeDatabaseConnection();
-
-    // Wczytywanie danych
+    function getGuildType() {
+        return new Promise(resolve => {
+            database.query(`SELECT * FROM guild_template WHERE user = '${interaction.user.id}'`, function (err, rows) {
+                if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true });
+                if (!rows.length) return;
+                resolve(rows[0].guildtype);
+            });
+        });
+    }
+    function getCategoryFontType() {
+        return new Promise(resolve => { database.query(`SELECT * FROM guild_template WHERE user = '${interaction.user.id}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].categoryfont) }) });
+    };
     const fonts = require('../../fonts.json');
     const fontedText = require('../../index').fontedText;
     const langCode = interaction.locale.slice(0, 2);
     const translationPath = path.resolve(__dirname, `../../translations/${langCode}.json`);
-    const defaultTranslationPath = path.resolve(__dirname, '../../translations/default.json');
+    const defaultTranslationPath = path.resolve(__dirname, '../../translations/en.json');
 
     let lang;
     const queryPromise = util.promisify(database.query).bind(database);
@@ -99,7 +107,7 @@ module.exports = async (client, interaction) => {
             'api_user_name': config.pastebin.username,
             'api_user_password': config.pastebin.password
         });
-    const map = require('../client/ready').api;
+    const map = require('../client/ready.js').api;
     //Command
     const guildTypes = [
         {
@@ -137,7 +145,6 @@ module.exports = async (client, interaction) => {
                 };
             }
         } catch (error) {
-            // Obsługa błędu
         }
     }
 
@@ -147,7 +154,7 @@ module.exports = async (client, interaction) => {
         try {
             const value = map.get('api');
             if (value == true) {
-                interaction.reply({ content: 'Moduł serwisowy został aktywowany. Spróbuj ponownie później', ephemeral: true });
+                interaction.reply({ content: 'The service module has been activated. Please try again later', ephemeral: true });
             } else {
                 command.execute(interaction);
             }
@@ -356,20 +363,19 @@ module.exports = async (client, interaction) => {
             const ChannelStyleInput = new TextInputBuilder()
                 .setCustomId('ChannelStyle')
                 .setLabel(`${lang.modals.channelStyle.channelStyleInput}`)
-                .setMaxLength(4)
                 .setMinLength(1)
+                .setMaxLength(25)
                 .setRequired(true)
-                .setPlaceholder('「💻」')
-                .setValue('「💻」')
+                .setPlaceholder(`${lang.modals.channelStyle.placeholderCategory}`)
                 .setStyle(TextInputStyle.Short);
             const CategoryChannelStyleInput = new TextInputBuilder()
                 .setCustomId('CategoryStyle')
                 .setLabel(`${lang.modals.channelStyle.categoryStyleInput}`)
                 .setRequired(true)
                 .setPlaceholder(`${lang.modals.channelStyle.placeholderCategory}`)
-                .setMinLength(3)
-                .setMaxLength(40)
-                .setStyle(TextInputStyle.Paragraph);
+                .setMinLength(1)
+                .setMaxLength(25)
+                .setStyle(TextInputStyle.Short);
             // const DescInput = new TextInputBuilder()
             //     .setCustomId('Description')
             //     .setLabel(`${lang.modals.channelStyle.serverDesc}`)
@@ -409,14 +415,8 @@ module.exports = async (client, interaction) => {
             function getUuid() {
                 return new Promise(resolve => { database.query(`SELECT * FROM guild_template WHERE user = '${interaction.user.id}'`, function (err, rows) { if (err) { return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); } else { if (rows.length) { resolve(rows[0].uuid) } else { return interaction.reply({ content: `${lang.sessionInfo.notExist}`, ephemeral: true }); } } }) });
             };
-            function getGuildType() {
-                return new Promise(resolve => { database.query(`SELECT * FROM guild_template WHERE user = '${interaction.user.id}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].guildtype) }) });
-            };
             function getFontType() {
                 return new Promise(resolve => { database.query(`SELECT * FROM guild_template WHERE user = '${interaction.user.id}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].font) }) });
-            };
-            function getCategoryFontType() {
-                return new Promise(resolve => { database.query(`SELECT * FROM guild_template WHERE user = '${interaction.user.id}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].categoryfont) }) });
             };
             function getChannelParameter() {
                 return new Promise(resolve => { database.query(`SELECT * FROM guild_template WHERE user = '${interaction.user.id}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].channelparam) }) });
@@ -484,7 +484,7 @@ module.exports = async (client, interaction) => {
                             interaction.reply({ content: `${lang.sessionInfo.limitExceeded} </saved-sessions:1082756745476190328>`, ephemeral: true });
                         } else {
                             database.query(`INSERT INTO saved_sessions(user, guildtype, locale, uuid, channelparam, categorystyle, channels, font, categoryfont, session) SELECT '${saveRows[0].user}', '${saveRows[0].guildtype}', '${saveRows[0].locale}', '${saveRows[0].uuid}', '${saveRows[0].channelparam}', '${saveRows[0].categorystyle}', '${saveRows[0].channels}', '${saveRows[0].font}', '${saveRows[0].categoryfont}', IFNULL(MAX(session) + 1, 1) FROM saved_sessions WHERE user = '${saveRows[0].user}'`);
-                            const button = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('run').setLabel('Wczytaj szablon').setStyle(ButtonStyle.Success));
+                            const button = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('run').setLabel(`${lang.loadTemplate}`).setStyle(ButtonStyle.Success));
                             interaction.message.edit({ components: [button] });
                             interaction.reply({ content: `${lang.sessionInfo.successfulSaveInfo} ${saveRows[0].uuid}`, ephemeral: true });
                         };
@@ -509,12 +509,12 @@ module.exports = async (client, interaction) => {
                         if (rows.length) {
                             const session = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('sessionDelete2').setLabel(`${lang.delete}`).setStyle(ButtonStyle.Danger));
                             const embed = new EmbedBuilder().setColor('Orange').setTitle(`${lang.sessionInfo.workingSessionInfo}`).setTimestamp();
-                            interaction.reply({ embeds: [embed], ephemeral: true, components: [session] });
+                            interaction.reply({ embeds: [embed], components: [session] });
                         } else {
                             createSession();
                             const buttons = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('confirm').setLabel(`${lang.continue}`).setStyle(ButtonStyle.Success));
                             const embed = new EmbedBuilder().setColor('#008033').setTitle(`${lang.sessionInfo.dataValidation}`).setTimestamp();
-                            interaction.reply({ embeds: [embed], components: [buttons], ephemeral: true });
+                            interaction.reply({ embeds: [embed], components: [buttons] });
                         };
                     });
                 } else {
@@ -537,14 +537,8 @@ module.exports = async (client, interaction) => {
                 '`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].uuid) })
                 });
             };
-            function getGuildType() {
-                return new Promise(resolve => { database.query(`SELECT * FROM saved_sessions WHERE user = '${interaction.user.id}' AND session = '${Number}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].guildtype) }) });
-            };
             function getFontType() {
                 return new Promise(resolve => { database.query(`SELECT * FROM saved_sessions WHERE user = '${interaction.user.id}' AND session = '${Number}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].font) }) });
-            };
-            function getCategoryFontType() {
-                return new Promise(resolve => { database.query(`SELECT * FROM saved_sessions WHERE user = '${interaction.user.id}' AND session = '${Number}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].categoryfont) }) });
             };
             function getChannelParameter() {
                 return new Promise(resolve => { database.query(`SELECT * FROM saved_sessions WHERE user = '${interaction.user.id}' AND session = '${Number}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].channelparam) }) });
@@ -625,14 +619,8 @@ module.exports = async (client, interaction) => {
             function getUuid() {
                 return new Promise(resolve => { database.query(`SELECT * FROM saved_sessions WHERE user = '${interaction.user.id}' AND session = '${Number}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); if (rows.length) return resolve(rows[0].uuid) }) });
             };
-            function getGuildType() {
-                return new Promise(resolve => { database.query(`SELECT * FROM saved_sessions WHERE user = '${interaction.user.id}' AND session = '${Number}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].guildtype) }) });
-            };
             function getFontType() {
                 return new Promise(resolve => { database.query(`SELECT * FROM saved_sessions WHERE user = '${interaction.user.id}' AND session = '${Number}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].font) }) });
-            };
-            function getCategoryFontType() {
-                return new Promise(resolve => { database.query(`SELECT * FROM saved_sessions WHERE user = '${interaction.user.id}' AND session = '${Number}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].categoryfont) }) });
             };
             function getChannelParameter() {
                 return new Promise(resolve => { database.query(`SELECT * FROM saved_sessions WHERE user = '${interaction.user.id}' AND session = '${Number}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].channelparam) }) });
@@ -791,17 +779,11 @@ module.exports = async (client, interaction) => {
             function getUuid() {
                 return new Promise(resolve => { database.query(`SELECT * FROM saved_sessions WHERE user = '${interaction.user.id}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].uuid) }) });
             };
-            function getGuildType() {
-                return new Promise(resolve => { database.query(`SELECT * FROM saved_sessions WHERE user = '${interaction.user.id}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].guildtype) }) });
-            };
             function getFontType() {
                 return new Promise(resolve => { database.query(`SELECT * FROM saved_sessions WHERE user = '${interaction.user.id}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].font) }) });
             };
             function getCategoryStyle() {
                 return new Promise(resolve => { database.query(`SELECT * FROM saved_sessions WHERE user = '${interaction.user.id}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].categorystyle) }) });
-            };
-            function getCategoryFontType() {
-                return new Promise(resolve => { database.query(`SELECT * FROM saved_sessions WHERE user = '${interaction.user.id}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].categoryfont) }) });
             };
             function getChannelParameter() {
                 return new Promise(resolve => { database.query(`SELECT * FROM saved_sessions WHERE user = '${interaction.user.id}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].channelparam) }) });
@@ -826,7 +808,7 @@ module.exports = async (client, interaction) => {
                 if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true });
                 if (rows.length) {
                     interaction.deferUpdate();
-                    //database.query(`DELETE FROM guild_template WHERE user='${interaction.user.id}'`)
+                    database.query(`DELETE FROM guild_template WHERE user='${interaction.user.id}'`)
                     const updateButton = async (label, style, delay, disabled, emoji, id) => {
                         setTimeout(() => {
                             const newButton = new ButtonBuilder()
@@ -871,10 +853,24 @@ module.exports = async (client, interaction) => {
                 .addComponents(new ButtonBuilder().setCustomId('run').setLabel(`${lang.loadTemplate}`).setStyle(ButtonStyle.Success).setDisabled(true))
             interaction.message.edit({ components: [buttons] });
             await interaction.deferReply({ ephemeral: true });
-            async function createTemplate(channelparam, CategoryParam, channels) {
-                const client = require('../../index').client;
-                const channelChannels = client.guilds.cache.get(interaction.guild.id).channels.cache.filter(channel => channel.type === ChannelType.GuildText);
-                const channelArray = Array.from(channelChannels.values());
+            database.query(`SELECT * FROM guild_template WHERE user = '${interaction.user.id}'`, (err, rows) => {
+                if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true });
+                if (rows.length) {
+                    createTemplate(rows[0].channelparam, rows[0].categorystyle, rows[0].channels)
+                } else {
+                    interaction.editReply({ content: `${lang.sessionInfo.notExist}`, ephemeral: true })
+                }
+            });
+            function getFontType() {
+                return new Promise(resolve => { database.query(`SELECT * FROM saved_sessions WHERE user = '${interaction.user.id}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].font) }) });
+            };
+            function getCategoryStyle() {
+                return new Promise(resolve => { database.query(`SELECT * FROM saved_sessions WHERE user = '${interaction.user.id}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].categorystyle) }) });
+            };
+            async function createTemplate(channelparam, categoryparam, array) {
+                const { client } = require('../../index');
+                const guild = client.guilds.cache.get(interaction.guild.id);
+                const channelsCache = guild.channels.cache;
 
                 function getChannels() {
                     return new Promise((resolve, reject) => {
@@ -894,25 +890,25 @@ module.exports = async (client, interaction) => {
                 let dontDelete = await getChannels();
                 if (dontDelete == null) dontDelete = [];
                 else dontDelete = dontDelete.split(',');
-
+                const guildType = await getGuildType();
+                const channelfont = await getFontType();
+                const categoryfont = await getCategoryFontType();
+                if (!guildType) return;
                 var ichannel = 0;
                 var ichannelnot = 0;
                 var icategory = 0;
                 var ivoice = 0;
                 var iforum = 0;
+                const channelChannels = client.guilds.cache.get(interaction.guild.id).channels.cache.filter(channel => channel.type === ChannelType.GuildText);
+                const channelArray = Array.from(channelChannels.values());
 
-                function deleteChar(string, int) {
-                    var convertedString = string;
-                    convertedString = string.substring(0, string.length - int);
-                    return convertedString;
-                }
+                database.query(`DELETE FROM guild_template WHERE user = '${interaction.user.id}'`);
 
-                const statEmbed = new EmbedBuilder().setTitle(`${lang.successfullyCreatedTemplate_template}`).setDescription(`\`\`\`${lang.channelParameter}\`\`\``).setAuthor({ name: interaction.guild.name, iconURL: interaction.guild.iconURL({ dynamic: true, format: "png" }) }).setColor('#8a1ca6').setTimestamp().setFooter({ text: interaction.user.tag });
 
                 // channelDelete
                 while (ichannel !== channelArray.length) {
                     const fetchedChannel = client.channels.cache.get(channelArray[ichannel].id);
-                    if (fetchedChannel.deletable && !dontDelete.includes(fetchedChannel.id) && fetchedChannel !== interaction.channel) { // Sprawdzenie, czy kanał jest usuwalny, nie znajduje się na liście "dontDelete" i nie jest to kanał interakcji
+                    if (fetchedChannel.deletable && !dontDelete.includes(fetchedChannel.id) && fetchedChannel !== interaction.channel) {
                         fetchedChannel.delete();
                     } else {
                         ichannelnot++;
@@ -927,8 +923,10 @@ module.exports = async (client, interaction) => {
                 try {
                     while (icategory !== categoriesArray.length) {
                         const fetchedChannel = client.channels.cache.get(categoriesArray[icategory].id);
-                        fetchedChannel.delete();
-                        icategory++;
+                        if (!dontDelete.includes(fetchedChannel.id)) {
+                            fetchedChannel.delete();
+                            icategory++;
+                        }
                     }
                 } catch (error) { }
 
@@ -938,8 +936,10 @@ module.exports = async (client, interaction) => {
                 try {
                     while (ivoice !== voiceArray.length) {
                         const fetchedChannel = client.channels.cache.get(voiceArray[ivoice].id);
-                        fetchedChannel.delete();
-                        ivoice++;
+                        if (!dontDelete.includes(fetchedChannel.id)) {
+                            fetchedChannel.delete();
+                            ivoice++;
+                        }
                     }
                 } catch (error) { }
 
@@ -949,8 +949,11 @@ module.exports = async (client, interaction) => {
                 try {
                     while (iforum !== forumArray.length) {
                         const fetchedChannel = client.channels.cache.get(forumArray[iforum].id);
-                        fetchedChannel.delete();
-                        iforum++;
+                        if (!dontDelete.includes(fetchedChannel.id)) {
+                            fetchedChannel.delete();
+                            iforum++;
+                        }
+
                     }
                 } catch (error) { }
 
@@ -969,401 +972,117 @@ module.exports = async (client, interaction) => {
                     embed.addFields({ name: `${lang.finalization_embed.forumChannelsDeleted}`, value: `\`\`\`${iforum}/${forumArray.length}\`\`\`` });
                 }
 
-
-                function getGuildType() {
-                    return new Promise(resolve => { database.query(`SELECT * FROM guild_template WHERE user = '${interaction.user.id}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); if (rows.length) return resolve(rows[0].guildtype) }) });
-                };
-                function getFontType() {
-                    return new Promise(resolve => { database.query(`SELECT * FROM guild_template WHERE user = '${interaction.user.id}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].font) }) });
-                };
-                function getCategoryFontType() {
-                    return new Promise(resolve => { database.query(`SELECT * FROM guild_template WHERE user = '${interaction.user.id}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].categoryfont) }) });
-                };
-                const guildType = await getGuildType();
-                const categoryfont = await getCategoryFontType();
-                const CategoryStyle = CategoryParam;
-                if (!guildType) return interaction.reply('Błąd 23x');
-                var channelStyle = channelparam;
-                var style = channelStyle;
-                style = style.trim();
-                const arr = Array.from(style);
-                var preview;
-                const withEmojis = /\p{Emoji}/u
-                const font = await getFontType();
-                if (withEmojis.test(arr[1])) {
-                    //if middle char is emoji
-                    if (arr[2]) { preview = arr[0] + `{emoji}` + arr[2] } else { preview = arr[0] + `{emoji}` }
-                    statEmbed.setDescription(deleteChar(statEmbed.data.description, 3) + ` ${preview}\`\`\``);
-                } else if (withEmojis.test(arr[0])) {
-                    //if first char is emoji
-                    if (arr[1]) { preview = arr[1] }
-                    if (arr[2]) { preview = preview + arr[2] }
-                    channelStyleShow = `{emoji}` + preview;
-                    statEmbed.setDescription(deleteChar(statEmbed.data.description, 3) + ` ${channelStyleShow}\`\`\``);
-                } else if (withEmojis.test(arr[2])) {
-                    //if third char is emoji
-                    if (arr[1]) { preview = arr[0] + arr[1] + `{emoji}` } else { preview = arr[0] + `{emoji}` }
-                    statEmbed.setDescription(deleteChar(statEmbed.data.description, 3) + ` ${preview}\`\`\``);
-                }
-                statEmbed.setDescription(deleteChar(statEmbed.data.description, 3) + `\n${lang.finalization_embed.selectedGuildType} ${guildType}\`\`\``);
-                statEmbed.setDescription(deleteChar(statEmbed.data.description, 3) + `\n${lang.finalization_embed.selectedCategoryParam} ${format(`{name}`, "{emoji}")}\`\`\``);
-                statEmbed.setDescription(deleteChar(statEmbed.data.description, 3) + `\n${lang.finalization_embed.selectedFont} ${font}\`\`\``);
-                statEmbed.setDescription(deleteChar(statEmbed.data.description, 3) + `\n${lang.finalization_embed.selectedFontCategory} ${categoryfont}\`\`\``);
-                statEmbed.setDescription(deleteChar(statEmbed.data.description, 3) + `\n\n${lang.finalization_embed.info}\`\`\``);
-                function returnChannelObject(param) {
-                    const arr = Array.from(param);
-                    if (arr.length < 3) {
-                        return {
-                            style: arr.some((value) => value === undefined) ? "InvalidFormat" : "ValidFormat",
-                            emoji: arr[1] !== undefined ? arr[1] : "",
-                            string: arr[0] !== undefined ? arr[0] : "",
-                            string2: arr[2] !== undefined ? arr[2] : ""
-                        };
+                function formatAndConvertToChannel(name, emoji, channelName, category) {
+                    let formattedChannelName = channelName.toString().replaceAll("{name}", name).replaceAll("{emoji}", emoji);
+                    if (category) {
+                        return fontedText(fonts[categoryfont], formattedChannelName);
+                    } else {
+                        return fontedText(fonts[channelfont], formattedChannelName);
                     }
-                    if (withEmojis.test(arr[1])) {
-                        // MidcharIsEmoji
-                        return {
-                            style: "SecondCharIsEmoji",
-                            emoji: arr[1],
-                            string: arr[0],
-                            string2: arr[2]
-                        };
-                    } else if (withEmojis.test(arr[0])) {
-                        // FirstcharIsEmoji
-                        if (arr[1] && arr[2]) {
-                            return {
-                                style: "FirstCharIsEmoji",
-                                emoji: arr[1],
-                                string: '',
-                                string2: arr[1] + arr[2]
-                            };
-                        } else if (!arr[2]) {
-                            // FirstcharIsEmoji
-                            return {
-                                style: "FirstCharIsEmoji",
-                                emoji: '',
-                                string: arr[1],
-                                string2: ''
-                            };
-                        }
-                    } else if (withEmojis.test(arr[2])) {
-                        // ThirdcharIsEmoji
-                        return {
-                            style: "ThirdCharIsEmoji",
-                            emoji: '',
-                            string: arr[0] + arr[1],
-                            string2: ''
-                        };
-                    }
+                }
+                const statEmbed = new EmbedBuilder().setTitle(`${lang.successfullyCreatedTemplate_template}`).setDescription(`\`\`\`${lang.channelParameter} ${formatAndConvertToChannel(lang.channelList.textChannels, '💬', channelparam)}\`\`\``).setAuthor({ name: interaction.guild.name, iconURL: interaction.guild.iconURL({ dynamic: true, format: "png" }) }).setColor('#8a1ca6').setTimestamp().setFooter({ text: interaction.user.tag });
 
-                    return {
-                        style: "NoMatch",
-                        emoji: '',
-                        string: '',
-                        string2: ''
-                    };
-                }
-
-                function format(name, emotka) {
-                    const stringWithPlaceholders = ["{name}", "{emoji}"];
-                    const replacements = {
-                        name: name || '',
-                        emoji: emotka || ''
-                    };
-
-                    let string = stringWithPlaceholders.join(' ');
-
-                    stringWithPlaceholders.forEach((placeholder) => {
-                        const placeholderWithoutDelimiters = placeholder.substring(1, placeholder.length - 1);
-                        const stringReplacement = replacements[placeholderWithoutDelimiters] || '';
-                        string = string.replace(placeholder, stringReplacement);
-                    });
-
-                    return string;
-                }
-                const object = returnChannelObject(channelparam)
-                console.log(object)
-                const rulesChannel = client.guilds.cache.get(interaction.guild.id).channels.cache.filter(channel => channel.id === interaction.guild.rulesChannelId).first();
-
-                if (channels) var array = channels.split(",");
-                if (array.includes("autoRolesChannel") || array.includes("all") || array.includes("force")) {
-                    await interaction.guild.channels.create({
-                        name: object.string + `🔧` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.autoRolesChannel}`)),
-                        type: ChannelType.GuildText,
-                        topic: `${lang.guildTemplateCreationParameters.topics.autoRoleChannel}`
-                    });
-                }
-                if (array.includes("verifyChannel") || array.includes("all") || array.includes("force")) {
-                    await interaction.guild.channels.create({
-                        name: object.string + `🧩` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.verifyChannel}`)),
-                        type: ChannelType.GuildText,
-                        topic: `${lang.guildTemplateCreationParameters.topics.authChannel} ⛳`,
-                        permissionOverwrites: [{ id: interaction.guild.id, deny: [PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.AddReactions, PermissionsBitField.Flags.CreatePublicThreads, PermissionsBitField.Flags.CreatePrivateThreads] }]
-                    });
-                }
-                const categoryMain = await interaction.guild.channels.create({
-                    name: object.string + `🔔` + object.string2 + fontedText(fonts[`${categoryfont}`], interaction.guild.name),
-                    type: ChannelType.GuildCategory,
-                });
-                const category = await interaction.guild.channels.create({
-                    name: object.string + `📋` + object.string2 + fontedText(fonts[`${categoryfont}`], format(`${lang.channelList.textChannels}`)),
-                    type: ChannelType.GuildCategory,
-                });
-                if (rulesChannel) {
-                    rulesChannel.setParent(categoryMain)
-                    rulesChannel.setName(object.string + `📜` + object.string2 + fontedText(fonts[`${font}`], `zasady`))
-                }
-                await interaction.guild.channels.create({
-                    name: object.string + `👋` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.welcomeChannel}`)),
-                    type: ChannelType.GuildText,
-                    parent: categoryMain.id,
-                    topic: `${lang.guildTemplateCreationParameters.topics.welcomeChannel.replace('%s', interaction.guild.name)}`
-                });
-                if (array.includes("eventChannel") || array.includes("all") || array.includes("force")) {
-                    await interaction.guild.channels.create({
-                        name: object.string + `🏆` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.eventChannel}`)),
-                        type: ChannelType.GuildText,
-                        parent: categoryMain.id,
-                        topic: `${lang.guildTemplateCreationParameters.topics.welcomeChannel}`
-                    });
-                }
-                if (array.includes("infoChannel") || array.includes("all") || array.includes("force")) {
-                    await interaction.guild.channels.create({
-                        name: object.string + `📰` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.infoChannel}`)),
-                        type: ChannelType.GuildText,
-                        parent: categoryMain.id,
-                        topic: `${lang.guildTemplateCreationParameters.topics.infoChannel}`
-                    });
-                }
-                if (array.includes("changelogChannel") || array.includes("all") || array.includes("force")) {
-                    await interaction.guild.channels.create({
-                        name: object.string + `🔧` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.changelogChannel}`)),
-                        type: ChannelType.GuildText,
-                        parent: categoryMain.id,
-                        topic: `${lang.guildTemplateCreationParameters.topics.changelogChannel}`
-                    });
-                }
-                if (array.includes("pollChannel") || array.includes("all") || array.includes("force")) {
-                    await interaction.guild.channels.create({
-                        name: object.string + `🍏` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.pollChannel}`)),
-                        type: ChannelType.GuildText,
-                        parent: categoryMain.id,
-                        topic: `${lang.guildTemplateCreationParameters.topics.pollChannel}`
-                    });
-                }
-                await interaction.guild.channels.create({
-                    name: object.string + `💬` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.generalChannel}`)),
-                    type: ChannelType.GuildText,
-                    parent: category.id,
-                    topic: `${lang.guildTemplateCreationParameters.topics.generalChannel}`,
-                });
-                if (array.includes("memesChannel") || array.includes("all") || array.includes("force")) {
-                    await interaction.guild.channels.create({
-                        name: object.string + `🤪` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.memesChannel}`)),
-                        type: ChannelType.GuildText,
-                        parent: category.id,
-                        topic: `${lang.guildTemplateCreationParameters.topics.memes}`,
-                        nsfw: true
-                    });
-                }
-                if (array.includes("boostChannel") || array.includes("all") || array.includes("force")) {
-                    await interaction.guild.channels.create({
-                        name: object.string + `🌹` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.boostChannel}`)),
-                        type: ChannelType.GuildText, parent: categoryMain.id,
-                        topic: `${lang.guildTemplateCreationParameters.topics.boostChannel}`
-                    });
-                }
-                if (array.includes("giveawayChannel") || array.includes("all") || array.includes("force")) {
-                    await interaction.guild.channels.create({
-                        name: object.string + `🎀` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.giveawayChannel}`)),
-                        type: ChannelType.GuildText, parent: categoryMain.id,
-                        topic: `${lang.guildTemplateCreationParameters.topics.giveawayChannel}`
-                    });
-                }
-                if (array.includes("suggestionChannel") || array.includes("all") || array.includes("force")) {
-                    await interaction.guild.channels.create({
-                        name: object.string + `✨` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.suggestionChannel}`)),
-                        type: ChannelType.GuildText, parent: categoryMain.id,
-                        topic: `${lang.guildTemplateCreationParameters.topics.suggestionChannel}`
-                    });
-                }
-                if (array.includes("helpChannel") || array.includes("all") || array.includes("force")) {
-                    await interaction.guild.channels.create({
-                        name: object.string + `🆘` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.helpChannel}`)),
-                        type: ChannelType.GuildText, parent: categoryMain.id,
-                        topic: `${lang.guildTemplateCreationParameters.topics.helpChannel}`
-                    });
-                }
-                if (array.includes("faqChannel") || array.includes("all") || array.includes("force")) {
-                    await interaction.guild.channels.create({
-                        name: object.string + `📚` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.faqChannel}`)),
-                        type: ChannelType.GuildText,
-                        parent: categoryMain.id,
-                        topic: `${lang.guildTemplateCreationParameters.topics.faqChannel}`
-                    });
-                }
-                if (array.includes("cmdChannel") || array.includes("all") || array.includes("force")) {
-                    await interaction.guild.channels.create({
-                        name: object.string + `🤖` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.cmdChannel}`)),
-                        type: ChannelType.GuildText,
-                        parent: category.id,
-                        topic: `${lang.guildTemplateCreationParameters.topics.cmdChannel}`
-                    });
-                }
-                //Kategorie
+                const rulesChannel = channelsCache.get(interaction.guild.rulesChannelId);
+                const categoryMain = await interaction.guild.channels.create({ name: formatAndConvertToChannel(lang.channelList.textChannels, '💬', categoryparam, 1), type: ChannelType.GuildCategory });
+                const channelOptions = [
+                    { key: "autoRolesChannel", icon: '🔧', topic: lang.guildTemplateCreationParameters.topics.autoRoleChannel },
+                    { key: "verifyChannel", icon: '🧩', topic: lang.guildTemplateCreationParameters.topics.authChannel + ' ⛳', permissionOverwrites: [{ id: interaction.guild.id, deny: [PermissionsBitField.Flags.SendMessages, PermissionsBitField.Flags.AddReactions, PermissionsBitField.Flags.CreatePublicThreads, PermissionsBitField.Flags.CreatePrivateThreads] }] },
+                    { key: "welcomeChannel", icon: '👋', parent: categoryMain.id, topic: lang.guildTemplateCreationParameters.topics.welcomeChannel.replace('%s', interaction.guild.name) },
+                    { key: "eventChannel", icon: '🏆', parent: categoryMain.id, topic: lang.guildTemplateCreationParameters.topics.welcomeChannel },
+                    { key: "infoChannel", icon: '📰', parent: categoryMain.id, topic: lang.guildTemplateCreationParameters.topics.infoChannel },
+                    { key: "changelogChannel", icon: '🔧', parent: categoryMain.id, topic: lang.guildTemplateCreationParameters.topics.changelogChannel },
+                    { key: "pollChannel", icon: '🍏', parent: categoryMain.id, topic: lang.guildTemplateCreationParameters.topics.pollChannel },
+                    { key: "generalChannel", icon: '💬', parent: categoryMain.id, topic: lang.guildTemplateCreationParameters.topics.generalChannel },
+                    { key: "memesChannel", icon: '🤪', parent: categoryMain.id, topic: lang.guildTemplateCreationParameters.topics.memes, nsfw: true },
+                    { key: "boostChannel", icon: '🌹', parent: categoryMain.id, topic: lang.guildTemplateCreationParameters.topics.boostChannel },
+                    { key: "giveawayChannel", icon: '🎀', parent: categoryMain.id, topic: lang.guildTemplateCreationParameters.topics.giveawayChannel },
+                    { key: "suggestionChannel", icon: '✨', parent: categoryMain.id, topic: lang.guildTemplateCreationParameters.topics.suggestionChannel },
+                    { key: "helpChannel", icon: '🆘', parent: categoryMain.id, topic: lang.guildTemplateCreationParameters.topics.helpChannel },
+                    { key: "faqChannel", icon: '📚', parent: categoryMain.id, topic: lang.guildTemplateCreationParameters.topics.faqChannel },
+                    { key: "cmdChannel", icon: '🤖', parent: categoryMain.id, topic: lang.guildTemplateCreationParameters.topics.cmdChannel }
+                ];
+                await Promise.all(channelOptions.filter(channel => array.includes(channel.key) || array.includes("all") || array.includes("force")).map(async (channel) => {
+                    await interaction.guild.channels.create({ name: formatAndConvertToChannel(lang.channelList[channel.key], channel.icon, channelparam), type: ChannelType.GuildText, parent: categoryMain.id, topic: channel.topic });
+                }));
                 if (guildType == "GuildTypeGame") {
-                    const categoryGame = await interaction.guild.channels.create({
-                        name: object.string + `🎮` + object.string2 + fontedText(fonts[`${categoryfont}`], format(`${lang.channelList.gamesChannel}`)),
-                        type: ChannelType.GuildCategory,
-                    });
-                    if (array.includes("gamesChannel") || array.includes("all") || array.includes("force")) {
-                        await interaction.guild.channels.create({
-                            name: object.string + `👥` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.gamesChannel}`)),
-                            type: ChannelType.GuildText, parent: categoryGame.id,
-                            topic: `${lang.guildTemplateCreationParameters.topics.gamesChannel}`
-                        });
-                    }
-                    if (array.includes("gamersChannel") || array.includes("all") || array.includes("force")) {
-                        await interaction.guild.channels.create({
-                            name: object.string + `🎮` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.gamesChannel}`)),
-                            type: ChannelType.GuildText, parent: categoryGame.id,
-                            topic: `${lang.guildTemplateCreationParameters.topics.gamersChannel}`
-                        });
-                    }
-                    if (array.includes("graphicChannel") || array.includes("all") || array.includes("force")) {
-                        await interaction.guild.channels.create({
-                            name: object.string + `🎨` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.graphicChannel}`)),
-                            type: ChannelType.GuildText, parent: categoryGame.id,
-                            topic: `${lang.guildTemplateCreationParameters.topics.graphicChannel}`
-                        });
-                    }
-                    if (array.includes("technoChannel") || array.includes("all") || array.includes("force")) {
-                        await interaction.guild.channels.create({
-                            name: object.string + `💻` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.technoChannel}`)),
-                            type: ChannelType.GuildText, parent: categoryGame.id,
-                            topic: `${lang.guildTemplateCreationParameters.topics.technoChannel}`
-                        });
-                    }
-                    if (array.includes("modelsChannel") || array.includes("all") || array.includes("force")) {
-                        await interaction.guild.channels.create({
-                            name: object.string + `🚀` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.modelsChannel}`)),
-                            type: ChannelType.GuildText, parent: categoryGame.id,
-                            topic: `${lang.guildTemplateCreationParameters.topics.modelsChannel}`
-                        });
-                    }
-                    if (array.includes("codeChannel") || array.includes("all") || array.includes("force")) {
-                        await interaction.guild.channels.create({
-                            name: object.string + `👨` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.codeChannel}`)),
-                            type: ChannelType.GuildText, parent: categoryGame.id,
-                            topic: `${lang.guildTemplateCreationParameters.topics.codeChannel}`
-                        });
-                    }
+                    const categoryGame = await interaction.guild.channels.create({ name: formatAndConvertToChannel(lang.channelList.gamesChannel, '🎮', categoryparam, 1), type: ChannelType.GuildCategory });
+                    const gameChannels = [
+                        { key: "gamesChannel", icon: '👥', parent: categoryGame.id, topic: lang.guildTemplateCreationParameters.topics.gamesChannel },
+                        { key: "gamersChannel", icon: '🎮', parent: categoryGame.id, topic: lang.guildTemplateCreationParameters.topics.gamersChannel },
+                        { key: "graphicChannel", icon: '🎨', parent: categoryGame.id, topic: lang.guildTemplateCreationParameters.topics.graphicChannel },
+                        { key: "technoChannel", icon: '💻', parent: categoryGame.id, topic: lang.guildTemplateCreationParameters.topics.technoChannel },
+                        { key: "modelsChannel", icon: '🚀', parent: categoryGame.id, topic: lang.guildTemplateCreationParameters.topics.modelsChannel },
+                        { key: "codeChannel", icon: '👨', parent: categoryGame.id, topic: lang.guildTemplateCreationParameters.topics.codeChannel }
+                    ];
+                    await Promise.all(gameChannels.filter(channel => array.includes(channel.key) || array.includes("all") || array.includes("force")).map(async (channel) => {
+                        await interaction.guild.channels.create({ name: formatAndConvertToChannel(lang.channelList[channel.key], channel.icon, channelparam), type: ChannelType.GuildText, parent: categoryGame.id, topic: channel.topic });
+                    }));
                 } else if (guildType == "GuildTypeSocial") {
-                    if (array.includes("socialChannel") || array.includes("all") || array.includes("force")) {
-                        await interaction.guild.channels.create({
-                            name: object.string + `📷` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.socialChannel}`)),
-                            type: ChannelType.GuildText, parent: categoryMain.id,
-                            topic: `${lang.guildTemplateCreationParameters.topics.socialChannel}`
-                        });
-                    }
-                    if (array.includes("bookChannel") || array.includes("all") || array.includes("force")) {
-                        await interaction.guild.channels.create({
-                            name: object.string + `📚` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.bookChannel}`)),
-                            type: ChannelType.GuildText,
-                            parent: category.id,
-                            topic: `${lang.guildTemplateCreationParameters.topics.bookChannel}`
-                        });
-                    }
-                    if (array.includes("offtopChannel") || array.includes("all") || array.includes("force")) {
-                        await interaction.guild.channels.create({
-                            name: object.string + `🌴` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.offtopChannel}`)),
-                            type: ChannelType.GuildText,
-                            parent: category.id,
-                            topic: `${lang.guildTemplateCreationParameters.topics.offtopChannel}`
-                        });
-                    }
-                    if (array.includes("filmChannel") || array.includes("all") || array.includes("force")) {
-                        await interaction.guild.channels.create({
-                            name: object.string + `🎬` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.filmChannel}`)),
-                            type: ChannelType.GuildText,
-                            parent: category.id,
-                            topic: `${lang.guildTemplateCreationParameters.topics.filmChannel}`
-                        });
-                    }
-                    if (array.includes("sportChannel") || array.includes("all") || array.includes("force")) {
-                        await interaction.guild.channels.create({
-                            name: object.string + `🏅` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.sportChannel}`)),
-                            type: ChannelType.GuildText,
-                            parent: category.id,
-                            topic: `${lang.guildTemplateCreationParameters.topics.sportChannel}`
-                        });
-                    }
+                    const socialChannels = [
+                        { key: "socialChannel", icon: '📷', parent: categoryMain.id, topic: lang.guildTemplateCreationParameters.topics.socialChannel },
+                        { key: "bookChannel", icon: '📚', parent: categoryMain.id, topic: lang.guildTemplateCreationParameters.topics.bookChannel },
+                        { key: "offtopChannel", icon: '🌴', parent: categoryMain.id, topic: lang.guildTemplateCreationParameters.topics.offtopChannel },
+                        { key: "filmChannel", icon: '🎬', parent: categoryMain.id, topic: lang.guildTemplateCreationParameters.topics.filmChannel },
+                        { key: "sportChannel", icon: '🏅', parent: categoryMain.id, topic: lang.guildTemplateCreationParameters.topics.sportChannel }
+                    ];
+                    await Promise.all(socialChannels.filter(channel => array.includes(channel.key) || array.includes("all") || array.includes("force")).map(async (channel) => {
+                        await interaction.guild.channels.create({ name: formatAndConvertToChannel(lang.channelList[channel.key], channel.icon, channelparam), type: ChannelType.GuildText, parent: categoryMain.id, topic: channel.topic });
+                    }));
                 }
-                if (array.includes("ticketChannel") || array.includes("logsChannel") || array.includes("all") || array.includes("force")) {
-                    const ticketCategory = await interaction.guild.channels.create({
-                        name: object.string + `📩` + object.string2 + fontedText(fonts[`${categoryfont}`], format(`${lang.channelList.ticketChannel}`)),
-                        type: ChannelType.GuildCategory,
-                    });
-                    await interaction.guild.channels.create({
-                        name: object.string + `📋` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.ticketChannel}`)),
-                        type: ChannelType.GuildText, parent: ticketCategory.id, permissionOverwrites: [{ id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel, PermissionsBitField.Flags.UseApplicationCommands] }],
-                        topic: `${lang.guildTemplateCreationParameters.topics.ticketChannel}`
-                    });
-                }
-                if (array.includes("adminChannel") || array.includes("logsChannel") || array.includes("all") || array.includes("force")) {
+                if (array.includes('adminChannel')) {
                     const adminCategory = await interaction.guild.channels.create({
-                        name: object.string + `❤️` + object.string2 + fontedText(fonts[`${categoryfont}`], format(`${lang.channelList.adminChannel}`)),
-                        type: ChannelType.GuildCategory,
+                        name: formatAndConvertToChannel(lang.channelList.adminChannel, '❤️', categoryparam, 1), type: ChannelType.GuildCategory, permissionOverwrites: [
+                            {
+                                id: interaction.guild.id,
+                                deny: [PermissionsBitField.Flags.ViewChannel],
+                            },
+                            {
+                                id: interaction.user.id,
+                                allow: [PermissionsBitField.Flags.ViewChannel],
+                            }
+                        ],
                     });
-                    if (array.includes("adminChannel") || array.includes("all") || array.includes("force")) {
-                        await interaction.guild.channels.create({
-                            name: object.string + `📕` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.adminChannel}`)),
-                            type: ChannelType.GuildText, parent: adminCategory.id, permissionOverwrites: [{ id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] }]
+                    const specialChannels = [
+                        { key: "ticketChannel", icon: '📩', category: adminCategory.id, topic: lang.guildTemplateCreationParameters.topics.ticketChannel },
+                        { key: "adminChannel", icon: '❤️', category: adminCategory.id, topic: lang.guildTemplateCreationParameters.topics.adminChannel },
+                        { key: "logsChannel", icon: '📜', category: adminCategory.id, topic: lang.guildTemplateCreationParameters.topics.logsChannel }
+                    ];
+                    await Promise.all(specialChannels.filter(channel => array.includes(channel.key) || array.includes("all") || array.includes("force")).map(async (channel) => {
+                        const adminchannels = await interaction.guild.channels.create({
+                            name: formatAndConvertToChannel(lang.channelList[channel.key], channel.icon, channelparam), type: ChannelType.GuildText, parent: adminCategory.id, topic: channel.topic,
                         });
-                    }
-                    if (array.includes("logsChannel") || array.includes("all") || array.includes("force")) {
-                        await interaction.guild.channels.create({
-                            name: object.string + `📜` + object.string2 + fontedText(fonts[`${font}`], format(`${lang.channelList.logsChannel}`)),
-                            type: ChannelType.GuildText, parent: adminCategory.id, permissionOverwrites: [{ id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] }],
-                            topic: `${lang.guildTemplateCreationParameters.topics.logsChannel}`
-                        });
-                    }
-                    const updateChannel = await interaction.guild.channels.create({
-                        name: object.string + `📜` + object.string2 + fontedText(fonts[`${font}`], format(`Update`)),
-                        type: ChannelType.GuildText, permissionOverwrites: [{ id: interaction.guild.id, deny: [PermissionsBitField.Flags.ViewChannel] }],
-                        parent: adminCategory.id,
-                        topic: `${lang.guildTemplateCreationParameters.topics.logsChannel}`,
-                        position: 1000
-                    });
-                    database.query(`INSERT INTO update_channels(guild, channelId) VALUES ('${interaction.guild.id}','${updateChannel.id}')`)
-                }
-                function formatTime(time) {
-                    let seconds = Math.floor((time % 60000) / 1000);
-                    let milliseconds = time % 1000;
-                    return `${parseInt(seconds.toString().padStart(2, '0'), 10)} ${lang.timeUnits.seconds} ${lang.and} ${milliseconds.toString().padStart(2, '0')} ${lang.timeUnits.miliseconds}`;
+                        await adminchannels.lockPermissions();
+                    }));
                 }
 
-                const buttons = new ActionRowBuilder()
-                    .addComponents(new ButtonBuilder().setCustomId('run').setLabel(`${lang.loadTemplateBlocked}`).setStyle(ButtonStyle.Success).setDisabled(true))
-                database.query(`DELETE FROM guild_template WHERE user = '${interaction.user.id}'`);
-                let elapsedTime = Date.now() - startTime;
-                database.query(`SELECT template FROM created`, (err, rows) => {
-                    if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true });
-                    if (rows.length) {
-                        database.query(`INSERT INTO created (template) VALUES ('1')`)
-                    }
-                });
-                interaction.message.edit({ components: [buttons] })
-                await interaction.editReply({ embeds: [embed, statEmbed], content: `${lang.taskTimeInfo} ${formatTime(elapsedTime)}` })
-            }
-            database.query(`SELECT * FROM guild_template WHERE user = '${interaction.user.id}'`, (err, rows) => {
-                if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true });
-                if (rows.length) {
-                    createTemplate(rows[0].channelparam, rows[0].categorystyle, rows[0].channels)
-                } else {
-                    interaction.editReply({ content: `${lang.sessionInfo.notExist}`, ephemeral: true })
+                function formatTime(time) {
+                    const seconds = Math.floor((time % 60000) / 1000);
+                    const milliseconds = time % 1000;
+                    return `${seconds.toString().padStart(2, '0')} ${lang.timeUnits.seconds} ${lang.and} ${milliseconds.toString().padStart(2, '0')} ${lang.timeUnits.miliseconds}`;
                 }
-            });
+                const elapsedTime = Date.now() - startTime;
+                if (interaction.guild.id != '1055619740577570917') {
+                    const webhookClient = new WebhookClient({ url: config.dataWebhook });
+                    const embedAnalytics = new EmbedBuilder()
+                        .setColor('Green')
+                        .setTitle('Utworzono nowy szablon')
+                        .setAuthor({ name: `${interaction.guild.name}`, iconURL: `${interaction.guild.iconURL({ dynamic: true })}` })
+                        .setFooter({ text: `${interaction.user.id}` })
+                        .addFields(
+                            { name: `Liczba użytkowników`, value: `${interaction.guild.memberCount}` },
+                            { name: `Czas`, value: `${formatTime(elapsedTime)}` },
+                            { name: `Kanały`, value: `\`\`\`${array}\`\`\`` }
+                        );
+
+                    webhookClient.send({
+                        username: 'Templates - Analityka',
+                        embeds: [embedAnalytics],
+                    });
+                }
+                interaction.message.edit({ components: [buttons] });
+                await interaction.editReply({ embeds: [embed, statEmbed], content: `${lang.taskTimeInfo} ${formatTime(elapsedTime)}` });
+            }
+
         } else if (interaction.customId == "editBackupSession") {
             validate(interaction.message.embeds[0], interaction);
             database.query(`SELECT * FROM guild_template WHERE user = '${interaction.user.id}'`, (err, rows) => {
@@ -1375,49 +1094,31 @@ module.exports = async (client, interaction) => {
             async function data(channelparam, categorystyle, uuid) {
                 const modal = new ModalBuilder()
                     .setCustomId('channelStyle')
-                    .setTitle(`${lang.modals.channelStyle.title}`);
+                    .setTitle(`${lang.modals.channelStyle.title}`)
                 const ChannelStyleInput = new TextInputBuilder()
                     .setCustomId('ChannelStyle')
                     .setLabel(`${lang.modals.channelStyle.channelStyleInput}`)
-                    .setMaxLength(4)
                     .setMinLength(1)
+                    .setMaxLength(25)
                     .setRequired(true)
-                    .setPlaceholder('「💻」')
-                    .setValue(`${channelparam || "「💻」"}`)
+                    .setPlaceholder(`${lang.modals.channelStyle.categoryStyleInput}`)
                     .setStyle(TextInputStyle.Short);
                 const CategoryChannelStyleInput = new TextInputBuilder()
                     .setCustomId('CategoryStyle')
                     .setLabel(`${lang.modals.channelStyle.categoryStyleInput}`)
                     .setRequired(true)
                     .setPlaceholder(`${lang.modals.channelStyle.placeholderCategory}`)
-                    .setMinLength(3)
-                    .setMaxLength(40)
+                    .setMinLength(1)
+                    .setMaxLength(25)
                     .setValue(`${categorystyle || "{name}"}`)
                     .setStyle(TextInputStyle.Short);
-                // const DescInput = new TextInputBuilder()
-                //     .setCustomId('Description')
-                //     .setLabel(`${lang.modals.channelStyle.serverDesc}`)
-                //     .setRequired(true)
-                //     .setValue(`${welcomedesc || lang.modals.channelStyle.descInputValue}`)
-                //     .setMaxLength(120)
-                //     .setStyle(TextInputStyle.Paragraph);
                 const ChannelStyle = new ActionRowBuilder().addComponents(ChannelStyleInput);
                 const CategoryChannelStyle = new ActionRowBuilder().addComponents(CategoryChannelStyleInput);
-                //const DescStyle = new ActionRowBuilder().addComponents(DescInput);
                 modal.addComponents(ChannelStyle, CategoryChannelStyle);
                 await interaction.showModal(modal);
             }
         } else if (interaction.customId == "continueSelectmenu") {
             validate(interaction.message.embeds[0], interaction);
-            function getGuildType() {
-                return new Promise(resolve => {
-                    database.query(`SELECT * FROM guild_template WHERE user = '${interaction.user.id}'`, function (err, rows) {
-                        if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true });
-                        if (!rows.length) return;
-                        resolve(rows[0].guildtype);
-                    });
-                });
-            }
             const guildType = await getGuildType();
             const embed = new EmbedBuilder().setTitle(`${lang.guildTypeOptions.channelGuildTypeOption} ${guildType}`).setFooter({ text: `${lang.guildTypeOptions.amount}` }).setColor('Blurple')
             const row = new ActionRowBuilder()
@@ -1558,42 +1259,20 @@ module.exports = async (client, interaction) => {
         if (interaction.customId === 'channelStyle') {
             validate(interaction.message.embeds[0], interaction);
             const channelStyle = interaction.fields.getTextInputValue('ChannelStyle');
-            var style = channelStyle;
-            style = style.trim();
-            const arr = Array.from(style);
-            var charZero = arr[0], charOne = arr[1], charTwo = arr[2];
-            const channelStyleShow = `${charZero} ${charOne} ${charTwo}`;
             const categoryStyleShow = interaction.fields.getTextInputValue('CategoryStyle');
-            function format(text, name, emotka) {
-                const stringWithPlaceholders = text;
-                const replacements = {
-                    name: name,
-                    emoji: emotka
-                };
-                const string = stringWithPlaceholders.replace(
-                    /{\w+}/g,
-                    placeholderWithDelimiters => {
-                        const placeholderWithoutDelimiters = placeholderWithDelimiters.substring(
-                            1,
-                            placeholderWithDelimiters.length - 1,
-                        );
-                        const stringReplacement = replacements[placeholderWithoutDelimiters] || placeholderWithDelimiters;
-                        return stringReplacement;
-                    },
-                );
-                return string;
+            function formatAndConvertToChannel(name, emoji, channelName) {
+                return channelName.replaceAll("{name}", name).replaceAll("{emoji}", emoji);
             }
-            //const welcomedesc = interaction.fields.getTextInputValue('Description');
+
             const embed = new EmbedBuilder()
                 .setColor('Blurple')
                 .setTitle(`${lang.modals.preview.channelPreviewTitle}`)
-                .setDescription(`**${lang.modals.preview.channelPreviewTemplate} \`${channelStyleShow}\`\n\n${lang.modals.preview.categoryPreview}\`\`\`${format(categoryStyleShow, `${lang.modals.preview.textChannels}`, "💬")}\`\`\`**`)//\n${lang.modals.preview.channelPreview}
-            //embed.addFields({ name: `${lang.modals.preview.welcomeScreen}`, value: `\`\`\`${welcomedesc}\`\`\`` },)
+                .setDescription(`**${lang.modals.preview.channelPreviewTemplate} \`${formatAndConvertToChannel(`${lang.modals.preview.textChannels}`, '💬', channelStyle)}\`\n\n${lang.modals.preview.categoryPreview}\`\`\`${formatAndConvertToChannel(`${lang.modals.preview.textChannels}`, '💬', `${categoryStyleShow}`)}\`\`\`**`)
             const editButton = new ActionRowBuilder()
                 .addComponents(new ButtonBuilder().setCustomId('continueSelectmenu').setLabel(`${lang.next}`).setStyle(ButtonStyle.Success))
                 .addComponents(new ButtonBuilder().setCustomId('edit').setLabel(`${lang.editor}`).setStyle(ButtonStyle.Success))
             const editButton2 = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('edit').setDisabled(true).setLabel('Edytor (Sesja wygasła)').setStyle(ButtonStyle.Success))
-            database.query(`UPDATE guild_template SET channelparam='${style}',categorystyle='${categoryStyleShow}' WHERE user=${interaction.user.id}`);
+            database.query(`UPDATE guild_template SET channelparam='${channelStyle}',categorystyle='${categoryStyleShow}' WHERE user=${interaction.user.id}`);
             interaction.reply({ components: [editButton], embeds: [embed] });
             const collector = interaction.channel.createMessageComponentCollector({ time: 75000 });
             collector.on('collect', async interaction => {
@@ -1604,30 +1283,23 @@ module.exports = async (client, interaction) => {
                     const ChannelStyleInput = new TextInputBuilder()
                         .setCustomId('ChannelStyle')
                         .setLabel(`${lang.modals.channelStyle.channelStyleInput}`)
-                        .setMaxLength(4)
                         .setMinLength(1)
+                        .setMaxLength(25)
                         .setRequired(true)
-                        .setPlaceholder('「💻」')
+                        .setPlaceholder(`${lang.modals.channelStyle.categoryStyleInput}`)
                         .setValue(channelStyle)
                         .setStyle(TextInputStyle.Short);
                     const CategoryChannelStyleInput = new TextInputBuilder()
                         .setCustomId('CategoryStyle')
                         .setLabel(`${lang.modals.channelStyle.categoryStyleInput}`)
                         .setRequired(true)
-                        .setMinLength(3)
-                        .setMaxLength(40)
+                        .setMinLength(1)
+                        .setMaxLength(25)
                         .setPlaceholder(`${lang.modals.channelStyle.categoryStyleInput}`)
                         .setValue(categoryStyleShow)
-                        .setStyle(TextInputStyle.Paragraph);
-                    // const DescInput = new TextInputBuilder()
-                    //     .setCustomId('Description')
-                    //     .setLabel(`${lang.modals.channelStyle.serverDesc}`)
-                    //     .setRequired(true)
-                    //     .setValue(welcomedesc)
-                    //     .setStyle(TextInputStyle.Paragraph);
+                        .setStyle(TextInputStyle.Short);
                     const ChannelStyle = new ActionRowBuilder().addComponents(ChannelStyleInput);
                     const CategoryChannelStyle = new ActionRowBuilder().addComponents(CategoryChannelStyleInput);
-                    //const DescStyle = new ActionRowBuilder().addComponents(DescInput);
                     modal.addComponents(ChannelStyle, CategoryChannelStyle);
                     await interaction.showModal(modal);
                     const test = setTimeout(function () {
@@ -1637,36 +1309,26 @@ module.exports = async (client, interaction) => {
             //Edit Panel
         } else if (interaction.customId == "channelStyleEdit") {
             validate(interaction.message.embeds[0], interaction);
-            var style = interaction.fields.getTextInputValue('ChannelStyle');
-            style = style.trim()
-            const arr = Array.from(style)
-            var charZero = arr[0], charOne = arr[1], charTwo = arr[2]
-            const channelStyleShow = `${charZero} + {Emoji} + ${charTwo}`
+            const channelStyle = interaction.fields.getTextInputValue('ChannelStyle');
             const categoryStyleShow = interaction.fields.getTextInputValue('CategoryStyle');
-            //const welcomedesc = interaction.fields.getTextInputValue('Description');
-            function format(text, name, emotka) {
-                const stringWithPlaceholders = text;
-                const replacements = {
-                    name: name,
-                    emoji: emotka
-                };
-                const string = stringWithPlaceholders.replace(
-                    /{\w+}/g,
-                    placeholderWithDelimiters => {
-                        const placeholderWithoutDelimiters = placeholderWithDelimiters.substring(1, placeholderWithDelimiters.length - 1);
-                        const stringReplacement = replacements[placeholderWithoutDelimiters] || placeholderWithDelimiters;
-                        return stringReplacement;
-                    },
-                );
-                return string;
+            function formatAndConvertToChannel(name, emoji, channelName) {
+                return channelName.replaceAll("{name}", name).replaceAll("{emoji}", emoji);
             }
+
             const embed = new EmbedBuilder()
                 .setColor('Blurple')
                 .setTitle(`${lang.modals.preview.channelPreviewTitle}`)
-                .setDescription(`**${lang.modals.preview.channelPreviewTemplate} \`${channelStyleShow}\`\n\n${lang.modals.preview.categoryPreview}\`\`\`${format(categoryStyleShow, `${lang.modals.preview.textChannels}`, "💬")}\`\`\`**`)//\n${lang.modals.preview.channelPreview}
-            //embed.addFields({ name: `${lang.modals.preview.welcomeScreen}`, value: `\`\`\`${welcomedesc}\`\`\`` });
-            database.query(`UPDATE guild_template SET channelparam='${style}',categorystyle='${categoryStyleShow}' WHERE user=${interaction.user.id}`);
+                .setDescription(`**${lang.modals.preview.channelPreviewTemplate} \`${formatAndConvertToChannel(`${lang.modals.preview.textChannels}`, '💬', channelStyle)}\`\n\n${lang.modals.preview.categoryPreview}\`\`\`${formatAndConvertToChannel(`${lang.modals.preview.textChannels}`, '💬', `${categoryStyleShow}`)}\`\`\`**`)
+            database.query(`UPDATE guild_template SET channelparam='${channelStyle}',categorystyle='${categoryStyleShow}' WHERE user=${interaction.user.id}`);
             interaction.update({ embeds: [embed] });
         };
     }
+    setTimeout(() => {
+        database.end(function (err) {
+            if (err) {
+                console.error('Błąd zamknięcia połączenia:', err.stack);
+                return;
+            }
+        });
+    }, 10000)
 };
