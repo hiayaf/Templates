@@ -92,7 +92,6 @@ module.exports = {
                     console.log('Połączenie z bazą danych zostało zamknięte.');
                 });
             }, 10000)
-            // Obsługa błędów połączenia z bazą danych
             database.on('error', function (err) {
                 console.error('Błąd połączenia z bazą danych:', err);
                 handleDatabaseError(err);
@@ -145,7 +144,7 @@ module.exports = {
                 .setColor('#008033');
             try {
                 const obj = (text);
-                let autoSaveVersionValue = null; guildTypeValue = null; channelsValue = null; categoryValue = null; channelParam = null; channelfontValue = null; categoryfontValue = null;
+                let guildTypeValue = null; channelsValue = null; categoryValue = null; channelParam = null; channelfontValue = null; categoryfontValue = null;
                 if (!obj.Settings || !obj.File) {
                     var attachment = `./GuildTemplate.json`;
                     const buffer = fs.readFileSync(attachment);
@@ -155,12 +154,6 @@ module.exports = {
                         .setDescription(`**${lang[`import_cmd`].sampleTemplate}**\n\`\`\`json\n${fileContent}\`\`\``);
                     await interaction.reply({ embeds: [embed], ephemeral: true, files: [attachment] });
                 } else {
-                    if (obj.File.autoSaveVersion !== undefined) {
-                        const value = obj.File.autoSaveVersion;
-                        autoSaveVersionValue = Number.isInteger(value) ? '☑️' : '❌';
-                        embed.addFields({ name: `${lang[`import_cmd`].emojisDesc}`, value: `**☑️ - ${lang[`import_cmd`].successOnImport}\n❌ - ${lang[`import_cmd`].errorOnImport}**` });
-                        embed.addFields({ name: `${lang[`import_cmd`].autoSaveVer}`, value: `\`\`\`json\nautoSaveVersion: ${value} ${autoSaveVersionValue}\`\`\`` });
-                    };
                     if (obj.Settings.guildType !== undefined) {
                         const value = obj.Settings.guildType;
                         guildTypeValue = ['GuildTypeSocial', 'GuildTypeFriends', 'GuildTypeGame'].includes(value) ? '☑️' : '❌';
@@ -206,7 +199,6 @@ module.exports = {
                         }, delay);
                     };
                     if (
-                        autoSaveVersionValue && autoSaveVersionValue.includes('❌') ||
                         guildTypeValue && guildTypeValue.includes('❌') ||
                         channelsValue && channelsValue.includes('❌') ||
                         categoryValue && categoryValue.includes('❌') ||
@@ -218,26 +210,29 @@ module.exports = {
                     };
                     updateButton(`${lang.load}`, ButtonStyle.Secondary, 500, true, "<:update_discord:1006609775485792396>", 'operation');
                     database.query(`SELECT * FROM guild_template WHERE user = '${interaction.user.id}'`, (err, rows) => {
+                        const { v4: uuidv4 } = require('uuid');
+                        const uuid = uuidv4();
+                        function createSession() {
+                            database.query(`DELETE FROM guild_template WHERE user = '${interaction.user.id}'`);
+                            const channels = obj.Settings.Channel.array.replaceAll(' ', '');
+                            if (obj.Settings.Channel.force == true) {
+                                var array = String(channels).split(",");
+                                array.push("force");
+                            };
+                            if (obj.Settings.Channel.all == true) {
+                                var array = [];
+                                array.push("all");
+                            };
+                            database.query(`INSERT INTO guild_template(user, guildtype, locale, uuid, channelparam, categorystyle, channels, font, categoryfont) VALUES ('${interaction.user.id}','${obj.Settings.guildType}','${obj.Settings.locale}','${uuid}','${obj.Settings.channelParam}','${obj.Settings.categoryParam}','${array}','${obj.Settings.channelfont}','${obj.Settings.categoryfont}')`);
+                            return uuid, array;
+                        };
+                        createSession();
                         if (err) return interaction.editReply({ content: `${lang.servicesError}`, ephemeral: true });
                         if (rows.length) {
+                            createSession()
                             updateButton(`${lang[`import_cmd`].deleteSessions}`, ButtonStyle.Success, 1000, false, "<:update_discord:1006609775485792396>", 'deletesessions');
+
                         } else {
-                            function createSession() {
-                                const { v4: uuidv4 } = require('uuid');
-                                const uuid = uuidv4();
-                                const channels = obj.Settings.Channel.array.replaceAll(' ', '');
-                                if (obj.Settings.Channel.force == true) {
-                                    var array = String(channels).split(",");
-                                    array.push("force");
-                                };
-                                if (obj.Settings.Channel.all == true) {
-                                    var array = [];
-                                    array.push("all");
-                                };
-                                database.query(`INSERT INTO guild_template(user, guildtype, locale, uuid, channelparam, categorystyle, channels, font, categoryfont) VALUES ('${interaction.user.id}','${obj.Settings.guildType}','${obj.Settings.locale}','${uuid}','${obj.Settings.channelParam}','${obj.Settings.categoryParam}','${array}','${obj.Settings.channelfont}','${obj.Settings.categoryfont}')`);
-                                return uuid, array;
-                            };
-                            createSession();
                             updateButton(`${lang.load}`, ButtonStyle.Success, 1000, false, "<:update_discord:1006609775485792396>", 'continue');
                         };
                     });

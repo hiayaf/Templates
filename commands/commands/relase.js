@@ -15,17 +15,16 @@ module.exports = {
             de: 'Änderungsprotokoll und mehr'
         }),
     async execute(interaction) {
-        const clientVer = require('../../package.json')
         const embed = new EmbedBuilder()
             .setColor('DarkGreen')
             .setTitle('Info')
             .setTimestamp();
-        var PastebinAPI = require('pastebin-js'),
-            pastebin = new PastebinAPI({
-                'api_dev_key': config.pastebin.key,
-                'api_user_name': config.pastebin.username,
-                'api_user_password': config.pastebin.password
-            });
+        const PastebinAPI = require('pastebin-js');
+        const pastebin = new PastebinAPI({
+            'api_dev_key': config.pastebin.key,
+            'api_user_name': config.pastebin.username,
+            'api_user_password': config.pastebin.password
+        });
         pastebin.getPaste('SUCRpiL5').then(function (data) {
             var changelogDate = data.substring(0, data.indexOf(' '));
             console.log(changelogDate)
@@ -38,7 +37,6 @@ module.exports = {
             embed.setDescription(changelog)
                 .addFields(
                     { name: `Developer:`, value: `**https://github.com/hiayaf**` },
-                    { name: `Wersja:`, value: `**${clientVer.version}**` },
                     { name: `Sprawdzanie dostępnych aktualizacji za:`, value: `**<t:${midnight}:R>**` },
                 );
             interaction.reply({ embeds: [embed], ephemeral: true });

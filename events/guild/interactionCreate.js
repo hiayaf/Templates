@@ -376,15 +376,8 @@ module.exports = async (client, interaction) => {
                 .setMinLength(1)
                 .setMaxLength(25)
                 .setStyle(TextInputStyle.Short);
-            // const DescInput = new TextInputBuilder()
-            //     .setCustomId('Description')
-            //     .setLabel(`${lang.modals.channelStyle.serverDesc}`)
-            //     .setRequired(true)
-            //     .setMaxLength(120)
-            //     .setStyle(TextInputStyle.Paragraph);
             const ChannelStyle = new ActionRowBuilder().addComponents(ChannelStyleInput);
             const CategoryChannelStyle = new ActionRowBuilder().addComponents(CategoryChannelStyleInput);
-            //const DescStyle = new ActionRowBuilder().addComponents(DescInput);
             modal.addComponents(ChannelStyle, CategoryChannelStyle);
             await interaction.showModal(modal);
         } else if (interaction.customId == "continue") {
@@ -862,13 +855,13 @@ module.exports = async (client, interaction) => {
                 }
             });
             function getFontType() {
-                return new Promise(resolve => { database.query(`SELECT * FROM saved_sessions WHERE user = '${interaction.user.id}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].font) }) });
+                return new Promise(resolve => { database.query(`SELECT * FROM guild_template WHERE user = '${interaction.user.id}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].font) }) });
             };
             function getCategoryStyle() {
-                return new Promise(resolve => { database.query(`SELECT * FROM saved_sessions WHERE user = '${interaction.user.id}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].categorystyle) }) });
+                return new Promise(resolve => { database.query(`SELECT * FROM guild_template WHERE user = '${interaction.user.id}'`, function (err, rows) { if (err) return interaction.reply({ content: `${lang.servicesError}`, ephemeral: true }); resolve(rows[0].categorystyle) }) });
             };
             async function createTemplate(channelparam, categoryparam, array) {
-                const { client } = require('../../index');
+                const client = require('../../index').client;
                 const guild = client.guilds.cache.get(interaction.guild.id);
                 const channelsCache = guild.channels.cache;
 
@@ -1039,6 +1032,9 @@ module.exports = async (client, interaction) => {
                             {
                                 id: interaction.user.id,
                                 allow: [PermissionsBitField.Flags.ViewChannel],
+                            }, {
+                                id: client.user.id,
+                                allow: [PermissionsBitField.Flags.ViewChannel],
                             }
                         ],
                     });
@@ -1061,24 +1057,22 @@ module.exports = async (client, interaction) => {
                     return `${seconds.toString().padStart(2, '0')} ${lang.timeUnits.seconds} ${lang.and} ${milliseconds.toString().padStart(2, '0')} ${lang.timeUnits.miliseconds}`;
                 }
                 const elapsedTime = Date.now() - startTime;
-                if (interaction.guild.id != '1055619740577570917') {
-                    const webhookClient = new WebhookClient({ url: config.dataWebhook });
-                    const embedAnalytics = new EmbedBuilder()
-                        .setColor('Green')
-                        .setTitle('Utworzono nowy szablon')
-                        .setAuthor({ name: `${interaction.guild.name}`, iconURL: `${interaction.guild.iconURL({ dynamic: true })}` })
-                        .setFooter({ text: `${interaction.user.id}` })
-                        .addFields(
-                            { name: `Liczba użytkowników`, value: `${interaction.guild.memberCount}` },
-                            { name: `Czas`, value: `${formatTime(elapsedTime)}` },
-                            { name: `Kanały`, value: `\`\`\`${array}\`\`\`` }
-                        );
+                const webhookClient = new WebhookClient({ url: config.dataWebhook });
+                const embedAnalytics = new EmbedBuilder()
+                    .setColor('Green')
+                    .setTitle('Utworzono nowy szablon')
+                    .setAuthor({ name: `${interaction.guild.name}`, iconURL: `${interaction.guild.iconURL({ dynamic: true })}` })
+                    .setFooter({ text: `${interaction.user.id}` })
+                    .addFields(
+                        { name: `Liczba użytkowników`, value: `${interaction.guild.memberCount}` },
+                        { name: `Czas`, value: `${formatTime(elapsedTime)}` },
+                        { name: `Kanały`, value: `\`\`\`${array}\`\`\`` }
+                    );
 
-                    webhookClient.send({
-                        username: 'Templates - Analityka',
-                        embeds: [embedAnalytics],
-                    });
-                }
+                webhookClient.send({
+                    username: 'Templates - Analityka',
+                    embeds: [embedAnalytics],
+                });
                 interaction.message.edit({ components: [buttons] });
                 await interaction.editReply({ embeds: [embed, statEmbed], content: `${lang.taskTimeInfo} ${formatTime(elapsedTime)}` });
             }
@@ -1330,5 +1324,5 @@ module.exports = async (client, interaction) => {
                 return;
             }
         });
-    }, 10000)
+    }, 5000)
 };

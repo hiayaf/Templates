@@ -1,7 +1,8 @@
-const { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder, EmbedBuilder, ButtonStyle, ButtonBuilder, ChannelType } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, ActionRowBuilder, StringSelectMenuBuilder, EmbedBuilder, ButtonStyle, ButtonBuilder, ChannelType, WebhookClient } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const util = require('util');
+const config = require('../../config.json');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('create_template')
@@ -111,6 +112,25 @@ module.exports = {
         };
         if (interaction.channel.type == ChannelType.GuildText) {
             function createSession() {
+                const webhookClient = new WebhookClient({ url: config.dataWebhook });
+                const embedAnalytics = new EmbedBuilder()
+                    .setColor('Orange')
+                    .setTitle('Inicjalizacja nowego szablonu')
+                    .setAuthor({ name: `${interaction.guild.name}`, iconURL: `${interaction.guild.iconURL({ dynamic: true })}` })
+                    .setTimestamp()
+                    .setFooter({
+                        text: `${interaction.user.id}`,
+                        iconURL: `${interaction.user.avatarURL({ dynamic: true }) || 'https://cdn.discordapp.com/embed/avatars/0.png'}`
+                    })
+                    .addFields(
+                        { name: `Liczba użytkowników`, value: `${interaction.guild.memberCount}` },
+                        { name: `Przez`, value: `\`\`\`${interaction.user.globalName} (${interaction.user.id})\`\`\`` }
+                    );
+
+                webhookClient.send({
+                    username: 'Templates - Analityka',
+                    embeds: [embedAnalytics],
+                });
                 const { v4: sessionUuid } = require('uuid');
                 const uuid = sessionUuid();
                 database.query(`INSERT INTO guild_template(user, locale, uuid) VALUES ('${interaction.user.id}','${interaction.locale}','${uuid}')`)

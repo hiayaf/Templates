@@ -29,8 +29,6 @@ module.exports = {
             collation: 'utf8mb4_unicode_ci'
         };
         let database;
-
-        // Obsługa błędów bazy danych
         function handleDatabaseError(err) {
             const now = new Date();
             const timestamp = now.toLocaleString();
@@ -77,8 +75,7 @@ module.exports = {
                     }
                     console.log('Połączenie z bazą danych zostało zamknięte.');
                 });
-            }, 1000)
-            // Obsługa błędów połączenia z bazą danych
+            }, 4000)
             database.on('error', function (err) {
                 console.error('Błąd połączenia z bazą danych:', err);
                 handleDatabaseError(err);
