@@ -183,7 +183,7 @@ module.exports = {
                         { name: `${lang.finalization_embed.channelArray}`, value: `\`\`\`${channelsarray.slice(0, 30).trim().replace(/,$/, '.') + '...'}\`\`\`` }
                     )
                     .setTimestamp()
-                    .setFooter({ text: `${interaction.user.tag}`, iconURL: interaction.guild.iconURL({ dynamic: true, size: 4096 }) })
+                    .setFooter({ text: `${interaction.user.tag}`, iconURL: interaction.guild.iconURL({ dynamic: true, size: 4096 }) || 'https://cdn.discordapp.com/embed/avatars/0.png' })
                     .setAuthor({ name: guildType, iconURL: emojiUrl })
                 const sessionsGo = new ActionRowBuilder()
                     .addComponents(new ButtonBuilder().setCustomId('sessionLoad').setLabel(`${lang.apply}`).setStyle(ButtonStyle.Success))

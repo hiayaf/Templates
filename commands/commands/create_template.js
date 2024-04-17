@@ -141,7 +141,7 @@ module.exports = {
                 if (rows.length) {
                     const copy = new EmbedBuilder()
                         .setTitle(`${lang[`create_template`].backupTitle}`).setColor('Orange')
-                        .setTimestamp().setFooter({ text: interaction.user.tag, iconURL: interaction.user.avatarURL({ dynamic: true, format: "png" }) }).setDescription(`${lang[`create_template`].backupDescription.replace('%s', rows[0].uuid)}`).setTimestamp();
+                        .setTimestamp().setFooter({ text: interaction.user.tag, iconURL: interaction.user.avatarURL({ dynamic: true, format: "png" }) || 'https://cdn.discordapp.com/embed/avatars/0.png' }).setDescription(`${lang[`create_template`].backupDescription.replace('%s', rows[0].uuid)}`).setTimestamp();
                     const row = new ActionRowBuilder()
                         .addComponents(new ButtonBuilder().setCustomId('save').setLabel(`${lang[`create_template`].saveButton}`).setStyle(ButtonStyle.Success).setEmoji('🧩'))
                         .addComponents(new ButtonBuilder().setCustomId('del').setLabel(`${lang[`create_template`].deleteButton}`).setStyle(ButtonStyle.Danger).setEmoji('💢'));

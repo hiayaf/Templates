@@ -101,12 +101,6 @@ module.exports = async (client, interaction) => {
     } catch (error) {
         console.log(error);
     }
-    var PastebinAPI = require('pastebin-js'),
-        pastebin = new PastebinAPI({
-            'api_dev_key': config.pastebin.key,
-            'api_user_name': config.pastebin.username,
-            'api_user_password': config.pastebin.password
-        });
     const map = require('../client/ready.js').api;
     //Command
     const guildTypes = [
@@ -225,7 +219,7 @@ module.exports = async (client, interaction) => {
                 "sportChannel": `<:football:1066442419677184121> **${lang.channelList.sportChannel}**`,
             };
             const embed = new EmbedBuilder()
-                .setTitle(`${lang.channelList.selectedChannelsToCreate} (${lang.channelList.together} ${selected.length})`).setDescription(`**+** ${selected.length ? selected.map(channel => channels[channel]).join(', \n**+** ') : `${lang.lack}`}`).setTimestamp().setColor('Blurple').setFooter({ text: interaction.guild.name, iconURL: interaction.guild.iconURL({ dynamic: true, format: "png" }) });
+                .setTitle(`${lang.channelList.selectedChannelsToCreate} (${lang.channelList.together} ${selected.length})`).setDescription(`**+** ${selected.length ? selected.map(channel => channels[channel]).join(', \n**+** ') : `${lang.lack}`}`).setTimestamp().setColor('Blurple').setFooter({ text: interaction.guild.name, iconURL: interaction.guild.iconURL({ dynamic: true, format: "png" }) || 'https://cdn.discordapp.com/embed/avatars/0.png' });
             const continueButton = new ActionRowBuilder()
                 .addComponents(new ButtonBuilder().setCustomId('continue2').setLabel(`${lang.next}`).setStyle(ButtonStyle.Success))
             database.query(`SELECT * FROM guild_template WHERE user = '${interaction.user.id}'`, (err, rows) => {
@@ -439,7 +433,7 @@ module.exports = async (client, interaction) => {
                     { name: `${lang.finalization_embed.channelArray}`, value: `\`\`\`${channelsarray.slice(0, 30).trim().replace(/,$/, '.') + '...'}\`\`\`` }
                 )
                 .setTimestamp()
-                .setFooter({ text: `${interaction.user.id}`, iconURL: interaction.guild.iconURL({ dynamic: true, size: 4096 }) })
+                .setFooter({ text: `${interaction.user.id}`, iconURL: interaction.guild.iconURL({ dynamic: true, size: 4096 }) || 'https://cdn.discordapp.com/embed/avatars/0.png' })
                 .setAuthor({ name: guildType, iconURL: emojiUrl });
             const row = new ActionRowBuilder()
                 .addComponents(new StringSelectMenuBuilder().setCustomId('ChannelsSelectBox').setPlaceholder(`${lang.step} 7`).setDisabled(true).addOptions({ value: `test`, label: `test` }));
@@ -563,7 +557,7 @@ module.exports = async (client, interaction) => {
                                 { name: `${lang.finalization_embed.channelArray}`, value: `\`\`\`${channelsarray.slice(0, 30).trim().replace(/,$/, '.') + '...'}\`\`\`` }
                             )
                             .setTimestamp()
-                            .setFooter({ text: `${interaction.user.tag}`, iconURL: interaction.guild.iconURL({ dynamic: true, size: 4096 }) })
+                            .setFooter({ text: `${interaction.user.tag}`, iconURL: interaction.guild.iconURL({ dynamic: true, size: 4096 }) || 'https://cdn.discordapp.com/embed/avatars/0.png' })
                             .setAuthor({ name: guildType, iconURL: emojiUrl })
                         const sessionsGo = new ActionRowBuilder().addComponents(new ButtonBuilder().setCustomId('sessionLoad').setLabel(`${lang.apply}`).setStyle(ButtonStyle.Success))
                             .addComponents(new ButtonBuilder().setCustomId('sessionDelete').setLabel(`${lang.delete}`).setStyle(ButtonStyle.Danger))
@@ -644,7 +638,7 @@ module.exports = async (client, interaction) => {
                                 { name: `${lang.finalization_embed.channelArray}`, value: `\`\`\`${channelsarray.slice(0, 30).trim().replace(/,$/, '.') + '...'}\`\`\`` }
                             )
                             .setTimestamp()
-                            .setFooter({ text: `${interaction.user.tag}`, iconURL: interaction.guild.iconURL({ dynamic: true, size: 4096 }) })
+                            .setFooter({ text: `${interaction.user.tag}`, iconURL: interaction.guild.iconURL({ dynamic: true, size: 4096 }) || 'https://cdn.discordapp.com/embed/avatars/0.png' })
                             .setAuthor({ name: guildType, iconURL: emojiUrl })
                         const sessionsGo = new ActionRowBuilder()
                             .addComponents(new ButtonBuilder().setCustomId('sessionLoad').setLabel(`${lang.apply}`).setStyle(ButtonStyle.Success))
@@ -973,7 +967,7 @@ module.exports = async (client, interaction) => {
                         return fontedText(fonts[channelfont], formattedChannelName);
                     }
                 }
-                const statEmbed = new EmbedBuilder().setTitle(`${lang.successfullyCreatedTemplate_template}`).setDescription(`\`\`\`${lang.channelParameter} ${formatAndConvertToChannel(lang.channelList.textChannels, '💬', channelparam)}\`\`\``).setAuthor({ name: interaction.guild.name, iconURL: interaction.guild.iconURL({ dynamic: true, format: "png" }) }).setColor('#8a1ca6').setTimestamp().setFooter({ text: interaction.user.tag });
+                const statEmbed = new EmbedBuilder().setTitle(`${lang.successfullyCreatedTemplate_template}`).setDescription(`\`\`\`${lang.channelParameter} ${formatAndConvertToChannel(lang.channelList.textChannels, '💬', channelparam)}\`\`\``).setAuthor({ name: interaction.guild.name, iconURL: interaction.guild.iconURL({ dynamic: true, format: "png" }) || 'https://cdn.discordapp.com/embed/avatars/0.png' }).setColor('#8a1ca6').setTimestamp().setFooter({ text: interaction.user.tag });
 
                 const rulesChannel = channelsCache.get(interaction.guild.rulesChannelId);
                 const categoryMain = await interaction.guild.channels.create({ name: formatAndConvertToChannel(lang.channelList.textChannels, '💬', categoryparam, 1), type: ChannelType.GuildCategory });
@@ -1061,7 +1055,7 @@ module.exports = async (client, interaction) => {
                 const embedAnalytics = new EmbedBuilder()
                     .setColor('Green')
                     .setTitle('Utworzono nowy szablon')
-                    .setAuthor({ name: `${interaction.guild.name}`, iconURL: `${interaction.guild.iconURL({ dynamic: true })}` })
+                    .setAuthor({ name: `${interaction.guild.name}`, iconURL: `${interaction.guild.iconURL({ dynamic: true, format: "png" }) || 'https://cdn.discordapp.com/embed/avatars/0.png'}` })
                     .setFooter({ text: `${interaction.user.id}` })
                     .addFields(
                         { name: `Liczba użytkowników`, value: `${interaction.guild.memberCount}` },
@@ -1165,7 +1159,7 @@ module.exports = async (client, interaction) => {
                 .setDescription(`**+ ${lang.lack}**`)
                 .setTimestamp()
                 .setColor('Blurple')
-                .setFooter({ text: interaction.guild.name, iconURL: interaction.guild.iconURL({ dynamic: true, format: "png" }) });
+                .setFooter({ text: interaction.guild.name, iconURL: interaction.guild.iconURL({ dynamic: true, format: "png" }) || 'https://cdn.discordapp.com/embed/avatars/0.png' });
             interaction.update({ components: [row], embeds: [embed, embed2] })
         } else if (interaction.customId == "continue3") {
             validate(interaction.message.embeds[0], interaction);
