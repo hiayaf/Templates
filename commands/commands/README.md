@@ -17,8 +17,70 @@
     }
 }
 ```
-1. Settings
-   - guildType
-     - GuildTypeSocial  
-     - GuildTypeFriends
-     - GuildTypeGame 
+1. Settings:
+    - guildType:
+        - GuildTypeSocial  
+        - GuildTypeFriends
+        - GuildTypeGame 
+    - channelParam:
+        - placeholders:
+            - {name}
+            - {emoji}
+    - categoryParam:
+        - placeholders:
+            - {name}
+            - {emoji}
+    - channelfont:
+        - Default
+        - Fraktur
+        - Script Bold
+        - MonoSpce
+        - Bold
+        - HandWrite
+        - Aesthetic
+        - Underline
+        - StrikeThrough
+        - Aggressive
+        - Mafia
+        - ScriptCursive
+    - categoryfont:
+        - Default
+        - Fraktur
+        - Script Bold
+        - MonoSpce
+        - Bold
+        - HandWrite
+        - Aesthetic
+        - Underline
+        - StrikeThrough
+        - Aggressive
+        - Mafia
+        - ScriptCursive
+    - Channel: 
+        - array:
+            - autoRolesChannel
+            - filmChannel
+            - verifyChannel
+            - gamesChannel
+            - ticketChannel
+            - boostChannel
+            - technoChannel
+            - faqChannel
+            - memesChannel
+            - cmdChannel
+            - logsChannel
+            - adminChannel
+            - suggestionChannel
+            - graphicChannel
+            - changelogChannel
+            - giveawayChannel
+            - pollChannel
+            - eventChannel
+            - infoChannel
+            - codeChannel
+            - offtopChannel
+            - socialChannel
+            - helpChannel
+            - gamersChannel
+            - bookChannel
+            - sportChannel
