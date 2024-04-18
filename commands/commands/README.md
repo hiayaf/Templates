@@ -17,3 +17,8 @@
     }
 }
 ```
+1. Settings
+   - guildType
+     - GuildTypeSocial  
+     - GuildTypeFriends
+     - GuildTypeGame 
