@@ -1,0 +1,8 @@
+18.04.2024
+<a:nitro:1066340230589849723> **Aktualizacja** <a:nitro:1066340230589849723>
+ 
+Poprawki w komendach `/import_settings`, `/create_template` oraz w interakcjach
+Dodanie wysyłanie danych analitycznych w celu raportowania usług bota
+ 
+Dodanie oficjalnego pliku do generowania szablonów:
+https://github.com/hiayaf/Templates/blob/main/commands/commands/README.md

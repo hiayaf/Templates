@@ -35,7 +35,6 @@ const dbconfig = {
 };
 let database;
 
-// Obsługa błędów bazy danych
 function handleDatabaseError(err) {
     const now = new Date();
     const timestamp = now.toLocaleString();
@@ -84,7 +83,6 @@ function initializeDatabaseConnection() {
         }, 10000)
     });
 
-    // Obsługa błędów połączenia z bazą danych
     database.on('error', function (err) {
         //console.error('Błąd połączenia z bazą danych:', err);
         handleDatabaseError(err);
@@ -235,48 +233,38 @@ client.on('ready', async () => {
     const result = secTime % 60;
     console.log(`Checking updates in ${computeMinutes} minutes and ${result} seconds.`);
 
-    function changelogSend() {
-        const PastebinAPI = require('pastebin-js');
-        const pastebin = new PastebinAPI({
-            'api_dev_key': config.pastebin.key,
-            'api_user_name': config.pastebin.username,
-            'api_user_password': config.pastebin.password
-        });
+    async function changelogSend() {
 
-        pastebin.getPaste('SUCRpiL5')
-            .then(function (data) {
-                const changelogDate = data.substring(0, data.indexOf(' '));
-                const changelog = data.slice(changelogDate.length + 1, data.length);
-                const dateChangelog = new Date();
-                const day = dateChangelog.getDate();
-                const month = dateChangelog.getMonth();
-                const year = dateChangelog.getFullYear();
-                const checkdate = `${day}.${month}.${year}`;
-                if (checkdate === changelogDate) {
-                    const embed = new EmbedBuilder()
-                        .setColor('DarkGreen')
-                        .setTitle('Info')
-                        .setTimestamp()
-                        .setDescription(changelog);
-                    database.query('SELECT channelId FROM update_channels', (err, rows) => {
-                        if (rows.length) {
-                            for (let i = 0; i < rows.length; i++) {
-                                const channelId = rows[i].channelId;
-                                const channel = client.channels.cache.get(channelId);
-                                if (channel) {
-                                    channel.send({ embeds: [embed] })
-                                        .catch((error) => console.error(`Błąd podczas wysyłania wiadomości na kanał o ID: ${channelId}`, error));
-                                } else {
-                                    console.log(`Nie znaleziono kanału o ID: ${channelId}`);
-                                };
-                            };
+        const response = await axios.get('https://lj-company.pl/templates/changelog.txt');
+        const data = response.data;
+        const changelogDate = data.substring(0, data.indexOf(' '));
+        const changelog = data.slice(changelogDate.length + 1, data.length);
+        const dateChangelog = new Date();
+        const day = dateChangelog.getDate();
+        const month = dateChangelog.getMonth();
+        const year = dateChangelog.getFullYear();
+        const checkdate = `${day}.${month}.${year}`;
+        if (checkdate === changelogDate) {
+            const embed = new EmbedBuilder()
+                .setColor('DarkGreen')
+                .setTitle('Info')
+                .setTimestamp()
+                .setDescription(changelog);
+            database.query('SELECT channelId FROM update_channels', (err, rows) => {
+                if (rows.length) {
+                    for (let i = 0; i < rows.length; i++) {
+                        const channelId = rows[i].channelId;
+                        const channel = client.channels.cache.get(channelId);
+                        if (channel) {
+                            channel.send({ embeds: [embed] })
+                                .catch((error) => console.error(`Błąd podczas wysyłania wiadomości na kanał o ID: ${channelId}`, error));
+                        } else {
+                            console.log(`Nie znaleziono kanału o ID: ${channelId}`);
                         };
-                    });
+                    };
                 };
-            })
-            .catch(function (err) {
-                console.log(err);
             });
+        };
     };
     const intervalTime = 86400 * 1000;// 24 godziny
 
@@ -342,3 +330,4 @@ module.exports.fontedText = function fontedText(font, string) {
         return string;
     };
 };
+

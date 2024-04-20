@@ -2,13 +2,7 @@ const config = require('../../config.json');
 const clientConfig = require('../../package.json');
 const { ActivityType, WebhookClient, EmbedBuilder } = require('discord.js');
 const fs = require('fs');
-const PastebinAPI = require('pastebin-js');
 
-const pastebin = new PastebinAPI({
-    'api_dev_key': config.pastebin.key,
-    'api_user_name': config.pastebin.username,
-    'api_user_password': config.pastebin.password
-});
 module.exports = async (client) => {
     const api = new Map();
     ["slash-cmd"].forEach(handler => {
@@ -65,59 +59,59 @@ module.exports = async (client) => {
 
     let previousApiStatus = null;
 
-    async function checkPastebin() {
-        try {
-            const data = await pastebin.getPaste('n7Lapnw9');
-            const now = new Date();
-            const timestamp = now.toLocaleString();
+    // async function checkPastebin() {
+    //     try {
+    //         const data = await pastebin.getPaste('n7Lapnw9');
+    //         const now = new Date();
+    //         const timestamp = now.toLocaleString();
 
-            let logData;
-            let apiStatus;
-            if (data === 'true') {
-                apiStatus = true;
-                logData = `${timestamp} Moduł serwisowy został aktywowany.\n`;
-            } else {
-                apiStatus = false;
-                logData = `${timestamp} Sprawdzanie hiayaf.services\n`;
-            };
+    //         let logData;
+    //         let apiStatus;
+    //         if (data === 'true') {
+    //             apiStatus = true;
+    //             logData = `${timestamp} Moduł serwisowy został aktywowany.\n`;
+    //         } else {
+    //             apiStatus = false;
+    //             logData = `${timestamp} Sprawdzanie hiayaf.services\n`;
+    //         };
 
-            fs.access('logs.txt', (err) => {
-                if (err) {
-                    fs.writeFile('logs.txt', '', (err) => {
-                        if (err) {
-                            return console.error(err);
-                        };
-                    });
-                }
+    //         fs.access('logs.txt', (err) => {
+    //             if (err) {
+    //                 fs.writeFile('logs.txt', '', (err) => {
+    //                     if (err) {
+    //                         return console.error(err);
+    //                     };
+    //                 });
+    //             }
 
-                fs.appendFile('logs.txt', logData, (err) => {
-                    if (err) {
-                        return console.error(err);
-                    };
-                });
-            });
+    //             fs.appendFile('logs.txt', logData, (err) => {
+    //                 if (err) {
+    //                     return console.error(err);
+    //                 };
+    //             });
+    //         });
 
-            if (previousApiStatus !== apiStatus) {
-                const embedModule = new EmbedBuilder()
-                    .setTitle(apiStatus ? 'Moduł serwisowy został załączony' : 'Moduł serwisowy został wyłączony')
-                    .addFields(
-                        { name: 'Status:', value: apiStatus ? 'Włączony' : 'Wyłączony' }
-                    )
-                    .setTimestamp()
-                    .setColor(0xf6ff00);
-                webhookClient.send({
-                    avatarURL: client.user.avatarURL({ size: 1024 }),
-                    embeds: [embedModule]
-                });
-            }
-            previousApiStatus = apiStatus;
+    //         if (previousApiStatus !== apiStatus) {
+    //             const embedModule = new EmbedBuilder()
+    //                 .setTitle(apiStatus ? 'Moduł serwisowy został załączony' : 'Moduł serwisowy został wyłączony')
+    //                 .addFields(
+    //                     { name: 'Status:', value: apiStatus ? 'Włączony' : 'Wyłączony' }
+    //                 )
+    //                 .setTimestamp()
+    //                 .setColor(0xf6ff00);
+    //             webhookClient.send({
+    //                 avatarURL: client.user.avatarURL({ size: 1024 }),
+    //                 embeds: [embedModule]
+    //             });
+    //         }
+    //         previousApiStatus = apiStatus;
 
-        } catch (err) {
-            console.log(err);
-        }
-    }
-    checkPastebin();
-    setInterval(checkPastebin, interval);
+    //     } catch (err) {
+    //         console.log(err);
+    //     }
+    // }
+    // checkPastebin();
+    // setInterval(checkPastebin, interval);
     module.exports.api = api;
 
 };
