@@ -1,5 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const axios = require('axios');
 const config = require('../../config.json');
+
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('release')
@@ -19,30 +21,29 @@ module.exports = {
             .setColor('DarkGreen')
             .setTitle('Info')
             .setTimestamp();
-        const PastebinAPI = require('pastebin-js');
-        const pastebin = new PastebinAPI({
-            'api_dev_key': config.pastebin.key,
-            'api_user_name': config.pastebin.username,
-            'api_user_password': config.pastebin.password
-        });
-        pastebin.getPaste('SUCRpiL5').then(function (data) {
-            var changelogDate = data.substring(0, data.indexOf(' '));
-            console.log(changelogDate)
+
+        try {
+            const response = await axios.get('https://lj-company.pl/templates/changelog.txt');
+            const data = response.data;
+
+            const changelogDate = data.substring(0, data.indexOf(' '));
             const changelog = data.slice(changelogDate.length + 1);
+
             const date = new Date();
             date.setDate(date.getDate() + 1);
             date.setHours(0, 0, 0, 0);
-            var now = Math.floor(Date.now() / 1000);
-            var midnight = Math.floor(date.getTime() / 1000);
+            const midnight = Math.floor(date.getTime() / 1000);
+
             embed.setDescription(changelog)
                 .addFields(
-                    { name: `Developer:`, value: `**https://github.com/hiayaf**` },
-                    { name: `Sprawdzanie dostępnych aktualizacji za:`, value: `**<t:${midnight}:R>**` },
+                    { name: 'Developer:', value: '**[Developer GitHub](https://github.com/hiayaf/)**' },
+                    { name: 'Sprawdzanie dostępnych aktualizacji za:', value: `**<t:${midnight}:R>**` }
                 );
-            interaction.reply({ embeds: [embed], ephemeral: true });
-        }).catch(function (err) {
-            console.error(err);
-        });
 
+            interaction.reply({ embeds: [embed], ephemeral: true });
+        } catch (error) {
+            console.error('Błąd podczas pobierania danych:', error);
+            interaction.reply('Wystąpił błąd podczas pobierania danych.');
+        }
     }
 };

@@ -43,8 +43,6 @@ module.exports = {
             collation: 'utf8mb4_unicode_ci'
         };
         let database;
-
-        // Obsługa błędów bazy danych
         function handleDatabaseError(err) {
             const now = new Date();
             const timestamp = now.toLocaleString();

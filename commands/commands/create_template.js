@@ -116,7 +116,7 @@ module.exports = {
                 const embedAnalytics = new EmbedBuilder()
                     .setColor('Orange')
                     .setTitle('Inicjalizacja nowego szablonu')
-                    .setAuthor({ name: `${interaction.guild.name}`, iconURL: `${interaction.guild.iconURL({ dynamic: true })}` })
+                    .setAuthor({ name: `${interaction.guild.name}`, iconURL: `${interaction.guild.iconURL({ dynamic: true }) || 'https://cdn.discordapp.com/embed/avatars/0.png'}` })
                     .setTimestamp()
                     .setFooter({
                         text: `${interaction.user.id}`,
